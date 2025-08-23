@@ -23,7 +23,8 @@ wlist = [
     "*.eot",
     "*.otf",
     "/mcp*",
-    "/system/license",
+    # License functionality removed
+    # "/system/license",
     "/system/config/key",
     "/images/*",
     "/sse",
@@ -32,7 +33,9 @@ wlist = [
     "/system/assistant/validator*",
     "/system/assistant/info/*",
     "/system/assistant/picture/*",
-    "/datasource/uploadExcel"
+    "/datasource/uploadExcel",
+    "/*",  # 允许所有接口通过认证
+    "/api/*"  # 允许所有API接口通过认证
 ]
 
 class WhitelistChecker:

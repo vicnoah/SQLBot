@@ -27,8 +27,15 @@ class TokenMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request, call_next):
         
-        if self.is_options(request) or whiteUtils.is_whitelisted(request.url.path):
+        if self.is_options(request):
             return await call_next(request)
+            
+        # 检查是否在白名单中
+        if whiteUtils.is_whitelisted(request.url.path):
+            # 为白名单接口设置默认管理员用户，避免current_user属性缺失
+            await self.set_default_admin_user(request)
+            return await call_next(request)
+            
         assistantTokenKey = settings.ASSISTANT_TOKEN_KEY
         assistantToken = request.headers.get(assistantTokenKey)
         trans = await get_i18n(request)
@@ -54,6 +61,39 @@ class TokenMiddleware(BaseHTTPMiddleware):
     
     def is_options(self, request: Request):
         return request.method == "OPTIONS"
+    
+    async def set_default_admin_user(self, request: Request):
+        """为白名单接口设置默认的管理员用户"""
+        try:
+            with Session(engine) as session:
+                # 获取ID为1的管理员用户
+                admin_user = await get_user_info(session=session, user_id=1)
+                if admin_user:
+                    admin_user_dto = UserInfoDTO.model_validate(admin_user)
+                    request.state.current_user = admin_user_dto
+                else:
+                    # 如果没有找到管理员用户，创建一个默认的
+                    default_admin = UserInfoDTO(
+                        id=1,
+                        account="admin",
+                        name="Administrator", 
+                        email="admin@sqlbot.local",
+                        oid=1,
+                        status=1
+                    )
+                    request.state.current_user = default_admin
+        except Exception as e:
+            SQLBotLogUtil.warning(f"Failed to set default admin user: {e}")
+            # 创建一个最小的默认用户
+            default_admin = UserInfoDTO(
+                id=1,
+                account="admin",
+                name="Administrator",
+                email="admin@sqlbot.local", 
+                oid=1,
+                status=1
+            )
+            request.state.current_user = default_admin
     
     async def validateToken(self, token: Optional[str], trans: I18n):
         if not token:

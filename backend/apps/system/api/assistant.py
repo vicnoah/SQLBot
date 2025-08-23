@@ -17,7 +17,9 @@ from common.utils.time import get_timestamp
 
 from common.core.config import settings
 from common.utils.utils import get_origin_from_referer
-from sqlbot_xpack.file_utils import SQLBotFileUtils
+# License functionality removed
+# from sqlbot_xpack.file_utils import SQLBotFileUtils
+from common.utils.file_utils import SimpleFileUtils
 
 router = APIRouter(tags=["system/assistant"], prefix="/system/assistant")
 
@@ -56,7 +58,7 @@ async def validator(session: SessionDep, id: int, virtual: Optional[int] = Query
         
 @router.get('/picture/{file_id}')
 async def picture(file_id: str):
-    file_path = SQLBotFileUtils.get_file_path(file_id=file_id)
+    file_path = SimpleFileUtils.get_file_path(file_id=file_id)
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
     
@@ -86,13 +88,13 @@ async def ui(session: SessionDep, data: str = Form(), files: List[UploadFile] = 
     if files:
         for file in files:
             origin_file_name = file.filename
-            file_name, flag_name = SQLBotFileUtils.split_filename_and_flag(origin_file_name)
+            file_name, flag_name = SimpleFileUtils.split_filename_and_flag(origin_file_name)
             file.filename = file_name
             if flag_name == 'logo' or flag_name == 'float_icon':
-                SQLBotFileUtils.check_file(file=file, file_types=[".jpg", ".jpeg", ".png", ".svg"], limit_file_size=(10 * 1024 * 1024))
+                SimpleFileUtils.check_file(file=file, file_types=[".jpg", ".jpeg", ".png", ".svg"], limit_file_size=(10 * 1024 * 1024))
                 if config_obj.get(flag_name):
-                    SQLBotFileUtils.detete_file(config_obj.get(flag_name))
-                file_id = await SQLBotFileUtils.upload(file)
+                    SimpleFileUtils.detete_file(config_obj.get(flag_name))
+                file_id = await SimpleFileUtils.upload(file)
                 ui_schema_dict[flag_name] = file_id
             else:
                 raise ValueError(f"Unsupported file flag: {flag_name}")

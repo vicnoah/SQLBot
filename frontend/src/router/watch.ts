@@ -11,9 +11,11 @@ const whiteList = ['/login']
 const assistantWhiteList = ['/assistant', '/embeddedPage']
 export const watchRouter = (router: any) => {
   router.beforeEach(async (to: any, from: any, next: any) => {
-    await loadXpackStatic()
+    // License functionality removed
+    // await loadXpackStatic()
     await appearanceStore.setAppearance()
-    LicenseGenerator.generateRouters(router)
+    // License functionality removed
+    // LicenseGenerator.generateRouters(router)
     if (to.path.startsWith('/login') && userStore.getUid) {
       next('/')
       return
@@ -55,22 +57,23 @@ const accessCrossPermission = (to: any) => {
     (to.path.startsWith('/set') && !userStore.isSpaceAdmin)
   )
 }
-const loadXpackStatic = () => {
-  if (document.getElementById('sqlbot_xpack_static')) {
-    return Promise.resolve()
-  }
-  const url = `/xpack_static/license-generator.umd.js?t=${Date.now()}`
-  return new Promise((resolve, reject) => {
-    request
-      .loadRemoteScript(url, 'sqlbot_xpack_static', () => {
-        LicenseGenerator?.init(import.meta.env.VITE_API_BASE_URL).then(() => {
-          resolve(true)
-        })
-      })
-      .catch((error) => {
-        console.error('Failed to load xpack_static script:', error)
-        ElMessage.error('Failed to load license generator script')
-        reject(error)
-      })
-  })
-}
+// License functionality removed
+// const loadXpackStatic = () => {
+//   if (document.getElementById('sqlbot_xpack_static')) {
+//     return Promise.resolve()
+//   }
+//   const url = `/xpack_static/license-generator.umd.js?t=${Date.now()}`
+//   return new Promise((resolve, reject) => {
+//     request
+//       .loadRemoteScript(url, 'sqlbot_xpack_static', () => {
+//         LicenseGenerator?.init(import.meta.env.VITE_API_BASE_URL).then(() => {
+//           resolve(true)
+//         })
+//       })
+//       .catch((error) => {
+//         console.error('Failed to load xpack_static script:', error)
+//         ElMessage.error('Failed to load license generator script')
+//         reject(error)
+//       })
+//   })
+// }

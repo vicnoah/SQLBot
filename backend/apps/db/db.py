@@ -7,7 +7,10 @@ from decimal import Decimal
 from apps.db.db_sql import get_table_sql, get_field_sql
 
 if platform.system() != "Darwin":
-    import dmPython
+    try:
+        import dmPython
+    except ImportError:
+        dmPython = None
 import pymysql
 from sqlalchemy import create_engine, text, Engine
 from sqlalchemy.orm import sessionmaker

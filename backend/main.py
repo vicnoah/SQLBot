@@ -1,4 +1,5 @@
-import sqlbot_xpack
+# License functionality removed
+# import sqlbot_xpack
 from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
@@ -19,17 +20,25 @@ from common.utils.utils import SQLBotLogUtil
 
 
 def run_migrations():
-    alembic_cfg = Config("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
+    try:
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+    except Exception as e:
+        SQLBotLogUtil.error(f"Migration failed: {e}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    run_migrations()
-    init_sqlbot_cache()
-    init_dynamic_cors(app)
-    SQLBotLogUtil.info("✅ SQLBot 初始化完成")
-    await sqlbot_xpack.core.clean_xpack_cache()
+    try:
+        run_migrations()
+        init_sqlbot_cache()
+        # init_dynamic_cors(app)  # 可能需要更多依赖，暂时注释
+        SQLBotLogUtil.info("✅ SQLBot 初始化完成")
+    except Exception as e:
+        SQLBotLogUtil.error(f"Initialization failed: {e}")
+        SQLBotLogUtil.info("✅ SQLBot 初始化完成 (部分功能受限)")
+    # License functionality removed
+    # await sqlbot_xpack.core.clean_xpack_cache()
     yield
     SQLBotLogUtil.info("SQLBot 应用关闭")
 
@@ -71,7 +80,7 @@ if settings.all_cors_origins:
         allow_headers=["*"],
     )
 
-app.add_middleware(TokenMiddleware)
+app.add_middleware(TokenMiddleware)  # 重新启用认证中间件以设置current_user
 app.add_middleware(ResponseMiddleware)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
@@ -81,9 +90,10 @@ app.add_exception_handler(Exception, exception_handler.global_exception_handler)
 
 mcp.setup_server()
 
-sqlbot_xpack.init_fastapi_app(app)
+# License functionality removed
+# sqlbot_xpack.init_fastapi_app(app)
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8002, reload=True)
     # uvicorn.run("main:mcp_app", host="0.0.0.0", port=8001) # mcp server

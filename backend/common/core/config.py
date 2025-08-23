@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     FRONTEND_HOST: str = "http://localhost:5173"
+    FRONTEND_HOST_ALT: str = "http://localhost:5174"
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
@@ -41,13 +42,14 @@ class Settings(BaseSettings):
     @property
     def all_cors_origins(self) -> list[str]:
         return [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS] + [
-            self.FRONTEND_HOST
+            self.FRONTEND_HOST,
+            self.FRONTEND_HOST_ALT
         ]
 
     POSTGRES_SERVER: str = 'localhost'
     POSTGRES_PORT: int = 5432
-    POSTGRES_USER: str = 'root'
-    POSTGRES_PASSWORD: str = "123456"
+    POSTGRES_USER: str = 'sqlbot'
+    POSTGRES_PASSWORD: str = "sqlbot"
     POSTGRES_DB: str = "sqlbot"
     SQLBOT_DB_URL: str = ''
     #SQLBOT_DB_URL: str = 'mysql+pymysql://root:Password123%40mysql@127.0.0.1:3306/sqlbot'
@@ -64,8 +66,9 @@ class Settings(BaseSettings):
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s:%(lineno)d - %(message)s"
     SQL_DEBUG: bool = False
     
-    UPLOAD_DIR: str = "/opt/sqlbot/data/file"
-    SQLBOT_KEY_EXPIRED: int = 100  # License key expiration timestamp, 0 means no expiration
+    UPLOAD_DIR: str = "./data/file"
+    # License functionality removed
+    # SQLBOT_KEY_EXPIRED: int = 100  # License key expiration timestamp, 0 means no expiration
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -81,8 +84,8 @@ class Settings(BaseSettings):
             path=self.POSTGRES_DB,
         )
 
-    MCP_IMAGE_PATH: str = '/opt/sqlbot/images'
-    EXCEL_PATH: str = '/opt/sqlbot/data/excel'
+    MCP_IMAGE_PATH: str = './data/images'
+    EXCEL_PATH: str = './data/excel'
     MCP_IMAGE_HOST: str = 'http://localhost:3000'
     SERVER_IMAGE_HOST: str = ''
 
