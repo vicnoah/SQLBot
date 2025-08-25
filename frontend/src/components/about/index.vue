@@ -5,7 +5,7 @@ import { ref, reactive, onMounted } from 'vue'
 // License functionality removed
 // import type { F2CLicense } from './index.ts'
 // import { licenseApi } from '@/api/license'
-import { ElMessage } from 'element-plus-secondary'
+// import { ElMessage } from 'element-plus-secondary'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user.ts'
 const dialogVisible = ref(false)
@@ -25,12 +25,12 @@ const license = reactive({
   isv: '',
 })
 
-const tipsSuffix = ref('')
+// const tipsSuffix = ref('')
 const build = ref('1.0.0')
 const isAdmin = ref(false)
-const fileList = reactive([])
-const dynamicCardClass = ref('')
-const loading = ref(false)
+// const fileList = reactive([])
+// const dynamicCardClass = ref('')
+// const loading = ref(false)
 
 onMounted(() => {
   isAdmin.value = userStore.getUid === '1'

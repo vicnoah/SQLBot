@@ -11,8 +11,8 @@ import axios, {
 import { useCache } from '@/utils/useCache'
 import { getLocale } from './utils'
 import { useAssistantStore } from '@/stores/assistant'
-import { i18n } from '@/i18n'
-const t = i18n.global.t
+// import { i18n } from '@/i18n'
+// const t = i18n.global.t
 const assistantStore = useAssistantStore()
 const { wsCache } = useCache()
 // Response data structure
@@ -65,10 +65,10 @@ class HttpService {
     this.setupInterceptors()
   }
 
-  private cancelCurrentRequest(message: string) {
-    this.cancelTokenSource.cancel(message)
-    this.cancelTokenSource = axios.CancelToken.source()
-  }
+  // private cancelCurrentRequest(message: string) {
+  //   this.cancelTokenSource.cancel(message)
+  //   this.cancelTokenSource = axios.CancelToken.source()
+  // }
 
   private setupInterceptors() {
     // Request interceptor

@@ -1,8 +1,8 @@
-import { ElMessage } from 'element-plus-secondary'
+// import { ElMessage } from 'element-plus-secondary'
 import { useCache } from '@/utils/useCache'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import { useUserStore } from '@/stores/user'
-import { request } from '@/utils/request'
+// import { request } from '@/utils/request'
 
 const appearanceStore = useAppearanceStoreWithOut()
 const userStore = useUserStore()

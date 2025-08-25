@@ -247,7 +247,7 @@ export const useAppearanceStore = defineStore('appearanceStore', {
       // }
       // License functionality removed
       // const obj = LicenseGenerator.getLicense()
-      const obj = { theme: 'default' } // Default fallback
+      const obj = { theme: 'default', status: 'valid' } // Default fallback
       if (obj?.status !== 'valid') {
         setCurrentColor('#1CBA90')
         document.title = 'SQLBot'
