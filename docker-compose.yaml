@@ -36,7 +36,7 @@ services:
   #       condition: service_healthy
 
   sqlbot-db:
-    image: postgres:17.5
+    image: docker.1ms.run/postgres:17.5
     container_name: sqlbot-db
     restart: always
     networks:

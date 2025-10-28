@@ -254,19 +254,19 @@ export const useAppearanceStore = defineStore('appearanceStore', {
         setLinkIcon()
         return
       }
-      const resData = await request.get('/system/appearance/ui')
-      this.loaded = true
-      if (!resData?.length) {
-        return
-      }
+      // const resData = await request.get('/system/appearance/ui')
+      // this.loaded = true
+      // if (!resData?.length) {
+      //   return
+      // }
       const data: AppearanceState = { loaded: false }
-      resData.forEach((item: KeyValue) => {
-        ;(
-          data as {
-            [key: string]: any
-          }
-        )[item.pkey] = item.pval
-      })
+      // resData.forEach((item: KeyValue) => {
+      //   ;(
+      //     data as {
+      //       [key: string]: any
+      //     }
+      //   )[item.pkey] = item.pval
+      // })
 
       this.navigate = data.navigate
       this.help = data.help
