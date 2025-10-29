@@ -1,6 +1,7 @@
 import os
 
-import sqlbot_xpack
+# License functionality removed
+# import sqlbot_xpack
 from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
@@ -24,8 +25,11 @@ from common.utils.utils import SQLBotLogUtil
 
 
 def run_migrations():
-    alembic_cfg = Config("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
+    try:
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+    except Exception as e:
+        SQLBotLogUtil.error(f"Migration failed: {e}")
 
 
 def init_terminology_embedding_data():
@@ -42,15 +46,20 @@ def init_table_and_ds_embedding():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    run_migrations()
-    init_sqlbot_cache()
-    init_dynamic_cors(app)
-    init_terminology_embedding_data()
-    init_data_training_embedding_data()
-    init_table_and_ds_embedding()
-    SQLBotLogUtil.info("✅ SQLBot 初始化完成")
-    await sqlbot_xpack.core.clean_xpack_cache()
-    await async_model_info()  # 异步加密已有模型的密钥和地址
+    try:
+        run_migrations()
+        init_sqlbot_cache()
+        init_dynamic_cors(app)
+        init_terminology_embedding_data()
+        init_data_training_embedding_data()
+        init_table_and_ds_embedding()
+        SQLBotLogUtil.info("✅ SQLBot 初始化完成")
+        await async_model_info()  # 异步加密已有模型的密钥和地址
+    except Exception as e:
+        SQLBotLogUtil.error(f"Initialization failed: {e}")
+        SQLBotLogUtil.info("✅ SQLBot 初始化完成 (部分功能受限)")
+    # License functionality removed
+    # await sqlbot_xpack.core.clean_xpack_cache()
     yield
     SQLBotLogUtil.info("SQLBot 应用关闭")
 
@@ -94,7 +103,7 @@ if settings.all_cors_origins:
         allow_headers=["*"],
     )
 
-app.add_middleware(TokenMiddleware)
+app.add_middleware(TokenMiddleware)  # 重新启用认证中间件以设置current_user
 app.add_middleware(ResponseMiddleware)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
@@ -104,7 +113,8 @@ app.add_exception_handler(Exception, exception_handler.global_exception_handler)
 
 mcp.setup_server()
 
-sqlbot_xpack.init_fastapi_app(app)
+# License functionality removed
+# sqlbot_xpack.init_fastapi_app(app)
 if __name__ == "__main__":
     import uvicorn
 

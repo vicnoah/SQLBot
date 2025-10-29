@@ -2,124 +2,43 @@
 import aboutBg from '@/assets/embedded/LOGO-about.png'
 
 import { ref, reactive, onMounted } from 'vue'
-import type { F2CLicense } from './index.ts'
-import { licenseApi } from '@/api/license'
-import { ElMessage } from 'element-plus-secondary'
+// License functionality removed
+// import type { F2CLicense } from './index.ts'
+// import { licenseApi } from '@/api/license'
+// import { ElMessage } from 'element-plus-secondary'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user.ts'
 const dialogVisible = ref(false)
 const { t } = useI18n()
 const userStore = useUserStore()
-const license: F2CLicense = reactive({
-  status: '',
-  corporation: '',
-  expired: '',
+
+// Simplified license object for display
+const license = reactive({
+  status: 'valid',
+  corporation: 'SQLBot Community Edition',
+  expired: 'No Expiration',
   count: 0,
-  version: '',
-  edition: '',
-  serialNo: '',
-  remark: '',
+  version: 'Community',
+  edition: 'Community',
+  serialNo: '-',
+  remark: 'Open Source Version',
   isv: '',
 })
-const tipsSuffix = ref('')
-const build = ref('')
+
+// const tipsSuffix = ref('')
+const build = ref('1.0.0')
 const isAdmin = ref(false)
-const fileList = reactive([])
-const dynamicCardClass = ref('')
-const loading = ref(false)
+// const fileList = reactive([])
+// const dynamicCardClass = ref('')
+// const loading = ref(false)
+
 onMounted(() => {
   isAdmin.value = userStore.getUid === '1'
-  initVersion()
-  getLicenseInfo()
+  // License functionality removed - no API calls needed
 })
-
-const initVersion = () => {
-  licenseApi.version().then((res) => {
-    build.value = res
-  })
-}
-const beforeUpload = (file: any) => {
-  importLic(file)
-  return false
-}
-
-const getLicenseInfo = () => {
-  validateHandler((res: any) => {
-    const info = getLicense(res)
-    setLicense(info)
-  })
-}
-const setLicense = (lic: any) => {
-  const lic_obj = {
-    status: lic.status,
-    corporation: lic.corporation,
-    expired: lic.expired,
-    count: lic.count,
-    version: lic.version,
-    edition: lic.edition,
-    serialNo: lic.serialNo,
-    remark: lic.remark,
-    isv: lic.isv,
-  }
-  Object.assign(license, lic_obj)
-  if (license?.serialNo && license?.remark) {
-    dynamicCardClass.value = 'about-card-max'
-  } else if (!license?.serialNo && !license?.remark) {
-    dynamicCardClass.value = ''
-  } else {
-    dynamicCardClass.value = 'about-card-medium'
-  }
-}
-const removeDistributeModule = () => {
-  const key = 'xpack-model-distributed'
-  localStorage.removeItem(key)
-}
-const importLic = (file: any) => {
-  removeDistributeModule()
-  const reader = new FileReader()
-  reader.onload = function (e: any) {
-    const licKey = e.target.result
-    update(licKey)
-  }
-  reader.readAsText(file)
-}
-const validateHandler = (success: any) => {
-  licenseApi.validate().then(success)
-}
-const getLicense = (result: any) => {
-  if (result.status === 'valid') {
-    tipsSuffix.value = result?.license?.edition === 'Embedded' ? '套' : '个账号'
-  }
-  return {
-    status: result.status,
-    corporation: result.license ? result.license.corporation : '',
-    expired: result.license ? result.license.expired : '',
-    count: result.license ? result.license.count : 0,
-    version: result.license ? result.license.version : '',
-    edition: result.license ? result.license.edition : '',
-    serialNo: result.license ? result.license.serialNo : '',
-    remark: result.license ? result.license.remark : '',
-    isv: result.license ? result.license.isv : '',
-  }
-}
-const update = (licKey: string) => {
-  const param = { license_key: licKey }
-  loading.value = true
-  licenseApi.update(param).then((response: any) => {
-    loading.value = false
-    if (response.status === 'valid') {
-      ElMessage.success(t('about.update_success'))
-      const info = getLicense(response)
-      setLicense(info)
-    } else {
-      ElMessage.warning(response.message)
-    }
-  })
-}
 
 const open = () => {
   dialogVisible.value = true
-  getLicenseInfo()
 }
 
 defineExpose({
@@ -179,6 +98,8 @@ defineExpose({
         <div class="value ellipsis">{{ license.remark || '-' }}</div>
       </div>
 
+      <!-- License functionality removed -->
+      <!-- 
       <div v-if="isAdmin" style="margin-top: 24px" class="lic_rooter">
         <el-upload
           action=""
@@ -192,6 +113,7 @@ defineExpose({
           <el-button plain> {{ $t('about.update_license') }} </el-button>
         </el-upload>
       </div>
+      -->
     </div>
     <div class="name">2014-2025 版权所有 © 杭州飞致云信息科技有限公司</div>
   </el-dialog>

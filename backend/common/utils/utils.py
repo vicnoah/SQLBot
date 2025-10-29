@@ -14,7 +14,11 @@ from typing import Optional
 
 import jwt
 import orjson
-from jwt.exceptions import InvalidTokenError
+try:
+    from jwt.exceptions import InvalidTokenError
+except ImportError:
+    # 兼容不同版本的PyJWT
+    from jwt import InvalidTokenError
 
 from common.core import security
 

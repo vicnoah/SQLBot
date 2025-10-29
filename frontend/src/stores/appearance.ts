@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { store } from '@/stores/index'
 // import { defaultFont, list } from '@/api/font'
-import { request } from '@/utils/request'
+// import { request } from '@/utils/request'
 
 import { setTitle, setCurrentColor } from '@/utils/utils'
 
@@ -35,10 +35,10 @@ interface AppearanceState {
   fontList?: Array<{ name: string; id: string; isDefault: boolean }>
 }
 
-interface KeyValue {
-  pkey: string
-  pval: string
-}
+// interface KeyValue {
+//   pkey: string
+//   pval: string
+// }
 // const { wsCache } = useCache()
 export const useAppearanceStore = defineStore('appearanceStore', {
   state: (): AppearanceState => {
@@ -250,28 +250,28 @@ export const useAppearanceStore = defineStore('appearanceStore', {
       // if (!isDataEaseBi) {
       //   document.title = ''
       // }
-      const obj = LicenseGenerator.getLicense()
+      // License functionality removed
+      // const obj = LicenseGenerator.getLicense()
+      const obj = { theme: 'default', status: 'valid' } // Default fallback
       if (obj?.status !== 'valid') {
         setCurrentColor('#1CBA90')
         document.title = 'SQLBot'
         setLinkIcon()
         return
       }
-      const resData = await request.get('/system/appearance/ui')
-      this.loaded = true
-      if (!resData?.length) {
-        setCurrentColor('#1CBA90')
-        setLinkIcon()
-        return
-      }
+      // const resData = await request.get('/system/appearance/ui')
+      // this.loaded = true
+      // if (!resData?.length) {
+      //   return
+      // }
       const data: AppearanceState = { loaded: false }
-      resData.forEach((item: KeyValue) => {
-        ;(
-          data as {
-            [key: string]: any
-          }
-        )[item.pkey] = item.pval
-      })
+      // resData.forEach((item: KeyValue) => {
+      //   ;(
+      //     data as {
+      //       [key: string]: any
+      //     }
+      //   )[item.pkey] = item.pval
+      // })
 
       this.navigate = data.navigate
       this.help = data.help

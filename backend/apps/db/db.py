@@ -13,7 +13,10 @@ from apps.db.db_sql import get_table_sql, get_field_sql, get_version_sql
 from common.error import ParseSQLResultError
 
 if platform.system() != "Darwin":
-    import dmPython
+    try:
+        import dmPython
+    except ImportError:
+        dmPython = None
 import pymysql
 import redshift_connector
 from sqlalchemy import create_engine, text, Engine

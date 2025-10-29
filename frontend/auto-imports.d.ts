@@ -9,5 +9,4 @@ declare global {
   const ElButton: typeof import('element-plus-secondary/es')['ElButton']
   const ElMessage: typeof import('element-plus-secondary/es')['ElMessage']
   const ElMessageBox: typeof import('element-plus-secondary/es')['ElMessageBox']
-  const LicenseGenerator: any
 }
