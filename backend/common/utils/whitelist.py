@@ -35,8 +35,6 @@ wlist = [
     "/system/assistant/app/*",
     "/system/assistant/picture/*",
     "/datasource/uploadExcel",
-    "/*",  # 允许所有接口通过认证
-    "/api/*"  # 允许所有API接口通过认证
 ]
 
 class WhitelistChecker:

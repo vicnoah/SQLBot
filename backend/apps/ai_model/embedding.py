@@ -20,6 +20,7 @@ class EmbeddingModelInfo(BaseModel):
 local_embedding_model = EmbeddingModelInfo(folder=settings.LOCAL_MODEL_PATH,
                                            name=os.path.join(settings.LOCAL_MODEL_PATH, 'embedding',
                                                              "shibing624_text2vec-base-chinese"))
+# local_embedding_model = EmbeddingModelInfo(name="shibing624/text2vec-base-chinese", folder=settings.LOCAL_MODEL_PATH)
 
 _lock = threading.Lock()
 locks = {}

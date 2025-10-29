@@ -16,7 +16,6 @@ from apps.system.schemas.system_schema import AssistantHeader, AssistantOutDsSch
 from common.core.config import settings
 from common.core.db import engine
 from common.core.sqlbot_cache import cache
-from common.utils.aes_crypto import simple_aes_decrypt
 from common.utils.utils import equals_ignore_case, string_to_numeric_hash
 
 
