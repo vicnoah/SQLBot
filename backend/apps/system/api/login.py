@@ -3,8 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from apps.system.schemas.system_schema import BaseUserDTO
 from common.core.deps import SessionDep, Trans
-# License functionality removed
-# from common.utils.crypto import sqlbot_decrypt
+from common.utils.rsa_utils import RSAUtil
 from ..crud.user import authenticate
 from common.core.security import create_access_token
 from datetime import timedelta
@@ -12,15 +11,30 @@ from common.core.config import settings
 from common.core.schemas import Token
 router = APIRouter(tags=["login"], prefix="/login")
 
+@router.get("/public-key")
+async def get_public_key() -> dict:
+    """获取 RSA 公钥用于前端加密"""
+    public_key = RSAUtil.get_public_key_string()
+    return {"public_key": public_key}
+
+
 @router.post("/access-token")
 async def local_login(
     session: SessionDep,
     trans: Trans,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Token:
-    # License functionality removed - use plain credentials
     origin_account = form_data.username
-    origin_pwd = form_data.password
+    encrypted_pwd = form_data.password
+    
+    # 尝试解密密码，如果解密失败则认为是明文密码（兼容旧版本）
+    try:
+        origin_pwd = RSAUtil.decrypt(encrypted_pwd)
+    except Exception as e:
+        # 解密失败，使用原始密码（明文）
+        origin_pwd = encrypted_pwd
+        print(f"解密失败，使用原始密码（明文）: {e}")
+    
     user: BaseUserDTO = authenticate(session=session, account=origin_account, password=origin_pwd)
     if not user:
         raise HTTPException(status_code=400, detail=trans('i18n_login.account_pwd_error'))
