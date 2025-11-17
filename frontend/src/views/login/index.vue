@@ -51,6 +51,14 @@
                 $t('common.login_')
               }}</el-button>
             </el-form-item>
+            
+            <!-- 企业微信登录按钮 -->
+            <el-form-item v-if="weWorkEnabled">
+              <el-button class="wework-login-btn" @click="handleWeWorkLogin">
+                <span class="wework-icon">🏢</span>
+                企业微信登录
+              </el-button>
+            </el-form-item>
           </el-form>
         </div>
       </div>
@@ -59,10 +67,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
+import { AuthApi } from '@/api/login'
+import { ElMessage } from 'element-plus'
 import custom_small from '@/assets/svg/logo-custom_small.svg'
 import LOGO_fold from '@/assets/LOGO-fold.svg'
 import login_image from '@/assets/embedded/login_image.png'
@@ -70,6 +80,7 @@ import { useAppearanceStoreWithOut } from '@/stores/appearance'
 import loginImage from '@/assets/blue/login-image_blue.png'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 const appearanceStore = useAppearanceStoreWithOut()
 const { t } = useI18n()
@@ -78,6 +89,10 @@ const loginForm = ref({
   username: '',
   password: '',
 })
+
+// 企业微信登录相关
+const weWorkEnabled = ref(false)
+const weWorkAuthUrl = ref('')
 
 const bg = computed(() => {
   return appearanceStore.getBg || (appearanceStore.isBlue ? loginImage : login_image)
@@ -103,6 +118,60 @@ const submitForm = () => {
     }
   })
 }
+
+// 企业微信登录
+const handleWeWorkLogin = () => {
+  if (weWorkAuthUrl.value) {
+    window.location.href = weWorkAuthUrl.value
+  }
+}
+
+// 处理企业微信回调
+const handleWeWorkCallback = async () => {
+  const code = route.query.code as string
+  const state = route.query.state as string
+  
+  if (code) {
+    try {
+      const res = await AuthApi.weWorkCallback(code, state)
+      userStore.setToken(res.access_token)
+      await userStore.info()
+      router.push('/chat')
+    } catch (error: any) {
+      ElMessage.error(error.message || '企业微信登录失败')
+      // 清除URL中的参数
+      router.replace({ query: {} })
+    }
+  }
+}
+
+// 初始化企业微信登录
+const initWeWorkLogin = async () => {
+  try {
+    // 检查是否启用企业微信登录
+    const config = await AuthApi.getWeWorkConfig()
+    weWorkEnabled.value = config.enabled
+    
+    if (weWorkEnabled.value) {
+      // 获取授权链接
+      const authRes = await AuthApi.getWeWorkAuthUrl()
+      weWorkAuthUrl.value = authRes.auth_url
+      weWorkEnabled.value = authRes.enabled
+    }
+  } catch (error) {
+    console.error('初始化企业微信登录失败:', error)
+  }
+}
+
+onMounted(() => {
+  // 初始化企业微信登录
+  initWeWorkLogin()
+  
+  // 检查是否是企业微信回调
+  if (route.query.code) {
+    handleWeWorkCallback()
+  }
+})
 </script>
 
 <style lang="less" scoped>
@@ -181,6 +250,26 @@ const submitForm = () => {
           height: 45px;
           font-size: 16px;
           border-radius: 4px;
+        }
+        
+        .wework-login-btn {
+          width: 100%;
+          height: 45px;
+          font-size: 16px;
+          border-radius: 4px;
+          background-color: #fff;
+          border: 1px solid #dee0e3;
+          color: #333;
+          
+          &:hover {
+            background-color: #f5f7fa;
+            border-color: #c0c4cc;
+          }
+          
+          .wework-icon {
+            margin-right: 8px;
+            font-size: 18px;
+          }
         }
 
         .agreement {

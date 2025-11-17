@@ -35,6 +35,10 @@ wlist = [
     "/system/assistant/app/*",
     "/system/assistant/picture/*",
     "/datasource/uploadExcel",
+    # 企业微信登录相关接口(无需认证)
+    "/wework/config",
+    "/wework/auth-url",
+    "/wework/callback",
 ]
 
 class WhitelistChecker:

@@ -116,5 +116,12 @@ class Settings(BaseSettings):
 
     ORACLE_CLIENT_PATH: str = '/opt/sqlbot/db_client/oracle_instant_client'
 
+    # 企业微信登录配置
+    WEWORK_CORP_ID: str = 'ww0654948da71aab2e'  # 企业ID
+    WEWORK_SECRET: str = 'nu1AQ4nAyt7snpJAmOlovBAN4-mtH0w-6qo4B45I-W0'  # 应用Secret
+    WEWORK_AGENT_ID: str = ''  # 应用AgentId
+    WEWORK_REDIRECT_URI: str = ''  # OAuth回调地址
+    WEWORK_ENABLED: bool = True  # 是否启用企业微信登录
+
 
 settings = Settings()  # type: ignore

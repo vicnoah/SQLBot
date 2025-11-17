@@ -11,6 +11,9 @@ export default defineConfig(({ mode }) => {
   console.info(env)
   return {
     base: './',
+    server: {
+      allowedHosts: ['localhost', '127.0.0.1', "sqlbot.sabertrain.com"],
+    },
     plugins: [
       vue(),
       AutoImport({

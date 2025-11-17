@@ -24,6 +24,7 @@
     "@npkg/tinymce-plugins": "^0.0.7",
     "@tinymce/tinymce-vue": "^5.1.0",
     "@vueuse/core": "^14.0.0",
+    "@wecom/jssdk": "^2.3.2",
     "dayjs": "^1.11.13",
     "element-plus": "^2.10.1",
     "element-plus-secondary": "^1.0.0",
