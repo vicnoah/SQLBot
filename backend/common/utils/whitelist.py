@@ -39,6 +39,9 @@ wlist = [
     "/wework/config",
     "/wework/auth-url",
     "/wework/callback",
+    # 企业微信回调接口(无需认证)
+    "/wework/callback/data",
+    "/wework/callback/command",
 ]
 
 class WhitelistChecker:

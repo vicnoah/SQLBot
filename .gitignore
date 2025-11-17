@@ -6,8 +6,6 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
-*.lock
-*-lock.json
 components.d.ts
 
 # Byte-compiled / optimized / DLL files

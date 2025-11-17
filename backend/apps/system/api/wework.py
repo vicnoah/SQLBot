@@ -2,7 +2,8 @@
 企业微信登录API
 """
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import PlainTextResponse, JSONResponse
 from sqlmodel import select
 from pydantic import BaseModel
 
@@ -10,7 +11,7 @@ from common.core.deps import SessionDep, Trans
 from common.core.config import settings
 from common.core.security import create_access_token
 from common.core.schemas import Token
-from common.utils.wework_utils import WeWorkOAuthClient
+from common.utils.wework_utils import WeWorkOAuthClient, WeWorkCallbackHandler
 from apps.system.models.user import UserModel
 from apps.system.schemas.system_schema import BaseUserDTO
 from apps.system.crud.user import get_user_by_account
@@ -28,7 +29,7 @@ class WeWorkAuthUrlResponse(BaseModel):
 @router.get("/auth-url", response_model=WeWorkAuthUrlResponse)
 async def get_wework_auth_url() -> WeWorkAuthUrlResponse:
     """
-    获取企业微信授权链接
+    获取企业微信授权链接(扫码登录)
     
     Returns:
         包含授权URL和是否启用的响应
@@ -40,7 +41,8 @@ async def get_wework_auth_url() -> WeWorkAuthUrlResponse:
         )
     
     redirect_uri = settings.WEWORK_REDIRECT_URI
-    auth_url = WeWorkOAuthClient.get_authorize_url(redirect_uri)
+    # 使用扫码登录方式
+    auth_url = WeWorkOAuthClient.get_qrcode_login_url(redirect_uri)
     
     return WeWorkAuthUrlResponse(
         auth_url=auth_url,
@@ -123,12 +125,161 @@ async def wework_callback(
 async def get_wework_config() -> dict:
     """
     获取企业微信登录配置(公开接口,无需认证)
+    用于前端初始化企业微信登录组件
     
     Returns:
-        包含启用状态的字典
+        包含启用状态、企业ID、应用ID的字典
     """
     return {
         "enabled": settings.WEWORK_ENABLED,
         "corpId": settings.WEWORK_CORP_ID if settings.WEWORK_ENABLED else "",
         "agentId": settings.WEWORK_AGENT_ID if settings.WEWORK_ENABLED else ""
     }
+
+
+@router.api_route("/callback/data", methods=["GET", "POST"], response_class=PlainTextResponse)
+async def handle_data_callback(
+    request: Request,
+    msg_signature: str = Query(..., description="签名"),
+    timestamp: str = Query(..., description="时间戳"),
+    nonce: str = Query(..., description="随机数"),
+    echostr: Optional[str] = Query(None, description="加密的随机字符串(仅GET请求)")
+) -> PlainTextResponse:
+    """
+    企业微信数据回调URL(同时支持GET验证和POST业务)
+    GET请求: 用于验证回调URL的有效性
+    POST请求: 用于接收用户消息、事件通知等
+    
+    Args:
+        request: FastAPI请求对象
+        msg_signature: 消息签名
+        timestamp: 时间戳
+        nonce: 随机数
+        echostr: 加密的随机字符串(仅GET请求时有此参数)
+        
+    Returns:
+        GET: 解密后的明文字符串
+        POST: 'success' 或加密后的响应消息
+    """
+    try:
+        # GET请求 - URL验证
+        if request.method == "GET":
+            if not echostr:
+                raise HTTPException(status_code=400, detail="GET请求缺少echostr参数")
+            
+            # 验证URL并解密
+            echo_str = WeWorkCallbackHandler.verify_url(
+                msg_signature=msg_signature,
+                timestamp=timestamp,
+                nonce=nonce,
+                echostr=echostr
+            )
+            
+            if not echo_str:
+                raise HTTPException(status_code=400, detail="回调验证失败")
+            
+            print(f"数据回调URL验证成功: {echo_str}")
+            return PlainTextResponse(content=echo_str)
+        
+        # POST请求 - 业务处理
+        else:
+            # 读取请求体(加密的JSON数据)
+            body = await request.body()
+            post_data = body.decode('utf-8')
+            
+            # 解密消息
+            decrypted_msg = WeWorkCallbackHandler.decrypt_msg(
+                post_data=post_data,
+                msg_signature=msg_signature,
+                timestamp=timestamp,
+                nonce=nonce
+            )
+            
+            if not decrypted_msg:
+                raise HTTPException(status_code=400, detail="消息解密失败")
+            
+            # 处理业务逻辑
+            import json
+            msg_data = json.loads(decrypted_msg)
+            print(f"收到企业微信数据回调: {msg_data}")
+            
+            # 返回 success 表示处理成功
+            return PlainTextResponse(content="success")
+    
+    except Exception as e:
+        print(f"数据回调处理异常: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"数据回调处理异常: {str(e)}")
+
+
+@router.api_route("/callback/command", methods=["GET", "POST"], response_class=PlainTextResponse)
+async def handle_command_callback(
+    request: Request,
+    msg_signature: str = Query(..., description="签名"),
+    timestamp: str = Query(..., description="时间戳"),
+    nonce: str = Query(..., description="随机数"),
+    echostr: Optional[str] = Query(None, description="加密的随机字符串(仅GET请求)")
+) -> PlainTextResponse:
+    """
+    企业微信指令回调URL(同时支持GET验证和POST业务)
+    GET请求: 用于验证回调URL的有效性
+    POST请求: 用于接收应用授权变更事件、suite_ticket等
+    
+    Args:
+        request: FastAPI请求对象
+        msg_signature: 消息签名
+        timestamp: 时间戳
+        nonce: 随机数
+        echostr: 加密的随机字符串(仅GET请求时有此参数)
+        
+    Returns:
+        GET: 解密后的明文字符串
+        POST: 'success' 或加密后的响应消息
+    """
+    try:
+        # GET请求 - URL验证
+        if request.method == "GET":
+            if not echostr:
+                raise HTTPException(status_code=400, detail="GET请求缺少echostr参数")
+            
+            # 验证URL并解密
+            echo_str = WeWorkCallbackHandler.verify_url(
+                msg_signature=msg_signature,
+                timestamp=timestamp,
+                nonce=nonce,
+                echostr=echostr
+            )
+            
+            if not echo_str:
+                raise HTTPException(status_code=400, detail="回调验证失败")
+            
+            print(f"指令回调URL验证成功: {echo_str}")
+            return PlainTextResponse(content=echo_str)
+        
+        # POST请求 - 业务处理
+        else:
+            # 读取请求体(加密的JSON数据)
+            body = await request.body()
+            post_data = body.decode('utf-8')
+            
+            # 解密消息
+            decrypted_msg = WeWorkCallbackHandler.decrypt_msg(
+                post_data=post_data,
+                msg_signature=msg_signature,
+                timestamp=timestamp,
+                nonce=nonce
+            )
+            
+            if not decrypted_msg:
+                raise HTTPException(status_code=400, detail="消息解密失败")
+            
+            # 处理业务逻辑(如存储suite_ticket)
+            import json
+            msg_data = json.loads(decrypted_msg)
+            print(f"收到企业微信指令回调: {msg_data}")
+            
+            # 返回 success 表示处理成功
+            return PlainTextResponse(content="success")
+    
+    except Exception as e:
+        print(f"指令回调处理异常: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"指令回调处理异常: {str(e)}")
