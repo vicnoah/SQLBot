@@ -13,6 +13,7 @@ from common.core.security import create_access_token
 from common.core.schemas import Token
 from common.utils.wework_utils import WeWorkOAuthClient, WeWorkCallbackHandler
 from apps.system.models.user import UserModel
+from apps.system.models.system_model import WorkspaceModel, UserWsModel
 from apps.system.schemas.system_schema import BaseUserDTO
 from apps.system.crud.user import get_user_by_account
 from datetime import timedelta
@@ -89,6 +90,13 @@ async def wework_callback(
         if not user_detail:
             raise HTTPException(status_code=400, detail="获取企业微信用户详细信息失败")
         
+        # 获取默认工作空间(选择第一个工作空间)
+        workspace_statement = select(WorkspaceModel).order_by(WorkspaceModel.create_time.asc())
+        default_workspace = session.exec(workspace_statement).first()
+        
+        if not default_workspace:
+            raise HTTPException(status_code=400, detail="系统中没有可用的工作空间,请联系管理员创建工作空间")
+        
         # 创建新用户
         new_user = UserModel(
             account=userid,  # 使用企业微信userid作为账号
@@ -96,25 +104,44 @@ async def wework_callback(
             email=user_detail.get("email", f"{userid}@wework.local"),
             wework_userid=userid,
             status=1,  # 默认启用
-            oid=0  # 需要后续分配工作空间
+            oid=default_workspace.id  # 分配默认工作空间
         )
         session.add(new_user)
         session.commit()
         session.refresh(new_user)
+        
+        # 创建用户-工作空间关联
+        user_ws = UserWsModel(
+            uid=new_user.id,
+            oid=default_workspace.id,
+            weight=0
+        )
+        session.add(user_ws)
+        session.commit()
+        
         db_user = new_user
+        print(f"创建企业微信新用户成功: {userid}, 分配工作空间: {default_workspace.name}")
     
     # 验证用户状态
-    user = BaseUserDTO.model_validate(db_user.model_dump())
-    
-    if user.status != 1:
+    if db_user.status != 1:
         raise HTTPException(status_code=400, detail=trans('i18n_login.user_disable', msg=trans('i18n_concat_admin')))
     
-    if not user.oid or user.oid == 0:
+    if not db_user.oid or db_user.oid == 0:
         raise HTTPException(status_code=400, detail=trans('i18n_login.no_associated_ws', msg=trans('i18n_concat_admin')))
     
     # 生成访问令牌
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    user_dict = user.to_dict()
+    
+    # 构造用户信息字典
+    user_dict = {
+        "id": db_user.id,
+        "account": db_user.account,
+        "name": db_user.name,
+        "email": db_user.email,
+        "oid": db_user.oid,
+        "status": db_user.status,
+        "wework_userid": db_user.wework_userid
+    }
     
     return Token(
         access_token=create_access_token(user_dict, expires_delta=access_token_expires)
