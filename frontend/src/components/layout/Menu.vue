@@ -58,6 +58,7 @@ const routerList = computed(() => {
       route.path !== '/login' &&
       !route.path.includes('/system') &&
       ((route.path.includes('set') && userStore.isSpaceAdmin) || !route.redirect) &&
+      ((route.path.includes('ds') && userStore.isSpaceAdmin) || !route.path.includes('ds')) &&
       route.path !== '/:pathMatch(.*)*' &&
       !route.path.includes('dsTable')
     )

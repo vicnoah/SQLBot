@@ -51,12 +51,13 @@ export const watchRouter = (router: Router) => {
   })
 }
 
-const accessCrossPermission = (to: any) => {
-  if (!to?.path) return false
-  return (
-    (to.path.startsWith('/system') && !userStore.isAdmin) ||
-    (to.path.startsWith('/set') && !userStore.isSpaceAdmin)
-  )
+const accessCrossPermission = (to: any) => {  
+  if (!to?.path) return false  
+  return (  
+    (to.path.startsWith('/system') && !userStore.isAdmin) ||  
+    (to.path.startsWith('/set') && !userStore.isSpaceAdmin) ||  
+    (to.path.startsWith('/ds') && !userStore.isSpaceAdmin)  // 用户空间普通用户无权限访问数据源管理
+  )  
 }
 // License functionality removed
 // const loadXpackStatic = () => {
