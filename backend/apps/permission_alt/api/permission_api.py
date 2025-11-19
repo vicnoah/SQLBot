@@ -47,29 +47,72 @@ async def list_rules_paginated(
     pageSize: int = Query(10, description="每页数量")
 ):
     """分页获取权限规则组列表"""
+    from apps.datasource.models.datasource import CoreDatasource, CoreTable
+
     rules = get_all_rules(session)
 
-    # 转换数据格式以匹配前端期望
     formatted_rules = []
     for rule in rules:
+        # 解析 permission_list
+        try:
+            permission_ids = json.loads(
+                rule.permission_list) if rule.permission_list else []
+        except (json.JSONDecodeError, TypeError):
+            permission_ids = []
+
+        # 解析 user_list
+        try:
+            user_list_raw = json.loads(
+                rule.user_list) if rule.user_list else []
+            users = [int(uid) if isinstance(uid, str)
+                     else uid for uid in user_list_raw]
+        except (json.JSONDecodeError, TypeError, ValueError):
+            users = []
+
+        # 查询权限详情并补充名称信息
+        permissions = []
+        for perm_id in permission_ids:
+            db_perm = session.get(DsPermission, perm_id)
+            if db_perm:
+                # 查询数据源名称
+                ds_name = ""
+                if db_perm.ds_id:
+                    ds = session.get(CoreDatasource, db_perm.ds_id)
+                    if ds:
+                        ds_name = ds.name
+
+                # 查询表名称
+                table_name = ""
+                if db_perm.table_id:
+                    table = session.get(CoreTable, db_perm.table_id)
+                    if table:
+                        table_name = table.table_name
+
+                # 构建权限对象
+                perm_dict = {
+                    "id": db_perm.id,
+                    "name": db_perm.name,
+                    "type": db_perm.type,
+                    "ds_id": db_perm.ds_id,
+                    "table_id": db_perm.table_id,
+                    "ds_name": ds_name,  # 添加数据源名称
+                    "table_name": table_name,  # 添加表名称
+                    "expression_tree": json.loads(db_perm.expression_tree) if db_perm.expression_tree else {},
+                    "tree": json.loads(db_perm.expression_tree) if db_perm.expression_tree else {},
+                    "permissions": json.loads(db_perm.permissions) if db_perm.permissions else [],
+                    "permission_list": json.loads(db_perm.permissions) if db_perm.permissions else []
+                }
+                permissions.append(perm_dict)
+
         formatted_rule = {
             "id": rule.id,
             "name": rule.name,
             "description": rule.description,
             "enable": rule.enable,
             "create_time": rule.create_time,
-            # 将 JSON 字符串解析为数组
-            "permissions": json.loads(rule.permission_list) if rule.permission_list else [],
-            "users": json.loads(rule.user_list) if rule.user_list else [],
+            "permissions": permissions,
+            "users": users
         }
-
-        # 进一步处理 permissions 数组中的嵌套 JSON 字符串
-        for perm in formatted_rule["permissions"]:
-            if isinstance(perm.get("expression_tree"), str):
-                perm["expression_tree"] = json.loads(perm["expression_tree"])
-                perm["tree"] = perm["expression_tree"]  # 前端需要 tree 字段
-            if isinstance(perm.get("permissions"), str):
-                perm["permission_list"] = json.loads(perm["permissions"])
 
         formatted_rules.append(formatted_rule)
 
@@ -119,6 +162,92 @@ async def list_rules_paginated(
 #         session.refresh(new_rule)
 #         return new_rule
 
+# @router.post("/save")
+# @require_space_admin
+# async def save_rule(session: SessionDep, trans: Trans, current_user: CurrentUser, rule: dict):
+#     """保存权限规则组(创建或更新)"""
+#     import json
+#     from datetime import datetime
+
+#     permissions_data = rule.get('permissions', [])
+#     users_data = rule.get('users', [])
+
+#     # 第一步: 保存或更新权限规则到 ds_permission 表
+#     permission_ids = []
+#     for perm in permissions_data:
+#         perm_id = perm.get('id')
+
+#         # 判断是否为真实的数据库 ID
+#         # 前端生成的临时 ID 通常是时间戳(13位数字),远大于数据库自增 ID
+#         is_real_db_id = perm_id and isinstance(perm_id, int) and perm_id < 2147483647
+
+#         # 准备权限数据
+#         permission_obj = DsPermission(
+#             enable=True,
+#             auth_target_type='USER',
+#             type=perm.get('type'),
+#             ds_id=perm.get('ds_id'),
+#             table_id=perm.get('table_id'),
+#             expression_tree=perm.get('expression_tree') if isinstance(perm.get('expression_tree'), str) else json.dumps(perm.get('expression_tree', {})),
+#             permissions=perm.get('permissions') if isinstance(perm.get('permissions'), str) else json.dumps(perm.get('permissions', [])),
+#             create_time=datetime.now()
+#         )
+
+#         if is_real_db_id:
+#             # 更新现有权限
+#             db_permission = session.get(DsPermission, perm_id)
+#             if db_permission:
+#                 db_permission.type = permission_obj.type
+#                 db_permission.ds_id = permission_obj.ds_id
+#                 db_permission.table_id = permission_obj.table_id
+#                 db_permission.expression_tree = permission_obj.expression_tree
+#                 db_permission.permissions = permission_obj.permissions
+#                 session.commit()
+#                 session.refresh(db_permission)
+#                 permission_ids.append(db_permission.id)
+#             else:
+#                 # ID 不存在,创建新权限
+#                 session.add(permission_obj)
+#                 session.flush()
+#                 session.refresh(permission_obj)
+#                 permission_ids.append(permission_obj.id)
+#         else:
+#             # 创建新权限(临时 ID 或无 ID)
+#             session.add(permission_obj)
+#             session.flush()
+#             session.refresh(permission_obj)
+#             permission_ids.append(permission_obj.id)
+
+#     session.commit()
+
+#     # 第二步: 保存或更新规则组到 ds_rules 表
+#     if rule.get('id'):
+#         # 更新现有规则组
+#         db_rule = session.get(DsRules, rule['id'])
+#         if not db_rule:
+#             raise HTTPException(status_code=404, detail="Rule not found")
+
+#         db_rule.name = rule.get('name', db_rule.name)
+#         db_rule.permission_list = json.dumps(permission_ids)
+#         db_rule.user_list = json.dumps(users_data)
+
+#         session.commit()
+#         session.refresh(db_rule)
+#         return db_rule
+#     else:
+#         # 创建新规则组
+#         new_rule = DsRules(
+#             enable=True,
+#             name=rule['name'],
+#             permission_list=json.dumps(permission_ids),
+#             user_list=json.dumps(users_data),
+#             create_time=datetime.now()
+#         )
+#         session.add(new_rule)
+#         session.commit()
+#         session.refresh(new_rule)
+#         return new_rule
+
 @router.post("/save")
 @require_space_admin
 async def save_rule(session: SessionDep, trans: Trans, current_user: CurrentUser, rule: dict):
@@ -126,30 +255,77 @@ async def save_rule(session: SessionDep, trans: Trans, current_user: CurrentUser
     import json
     from datetime import datetime
 
-    # 如果有 id 则更新,否则创建
+    permissions_data = rule.get('permissions', [])
+    users_data = rule.get('users', [])
+
+    # 第一步: 保存或更新权限规则到 ds_permission 表
+    permission_ids = []
+    for perm in permissions_data:
+        perm_id = perm.get('id')
+
+        # 判断是否为真实的数据库 ID
+        is_real_db_id = perm_id and isinstance(
+            perm_id, int) and perm_id < 2147483647
+
+        # 准备权限数据
+        permission_obj = DsPermission(
+            enable=True,
+            auth_target_type='USER',
+            type=perm.get('type'),
+            ds_id=perm.get('ds_id'),
+            table_id=perm.get('table_id'),
+            name=perm.get('name'),  # 添加这一行
+            expression_tree=perm.get('expression_tree') if isinstance(perm.get(
+                'expression_tree'), str) else json.dumps(perm.get('expression_tree', {})),
+            permissions=perm.get('permissions') if isinstance(
+                perm.get('permissions'), str) else json.dumps(perm.get('permissions', [])),
+            create_time=datetime.now()
+        )
+
+        if is_real_db_id:
+            # 更新现有权限
+            db_permission = session.get(DsPermission, perm_id)
+            if db_permission:
+                db_permission.type = permission_obj.type
+                db_permission.ds_id = permission_obj.ds_id
+                db_permission.table_id = permission_obj.table_id
+                db_permission.name = permission_obj.name  # 添加这一行
+                db_permission.expression_tree = permission_obj.expression_tree
+                db_permission.permissions = permission_obj.permissions
+                session.commit()
+                session.refresh(db_permission)
+                permission_ids.append(db_permission.id)
+            else:
+                raise HTTPException(
+                    status_code=404, detail="Permission not found")
+        else:
+            # 创建新权限
+            session.add(permission_obj)
+            session.commit()
+            session.refresh(permission_obj)
+            permission_ids.append(permission_obj.id)
+
+    # 第二步: 保存或更新规则组到 ds_rules 表
     if rule.get('id'):
-        # 更新现有规则
+        # 更新现有规则组
         db_rule = session.get(DsRules, rule['id'])
         if not db_rule:
             raise HTTPException(status_code=404, detail="Rule not found")
 
-        # 更新字段 - 关键:将数组转换为 JSON 字符串
         db_rule.name = rule.get('name', db_rule.name)
-        db_rule.permission_list = json.dumps(
-            rule.get('permissions', []))  # 序列化为 JSON 字符串
-        db_rule.user_list = json.dumps(rule.get('users', []))  # 序列化为 JSON 字符串
+        db_rule.permission_list = json.dumps(permission_ids)
+        db_rule.user_list = json.dumps(users_data)
 
         session.commit()
         session.refresh(db_rule)
         return db_rule
     else:
-        # 创建新规则
+        # 创建新规则组
         new_rule = DsRules(
             enable=True,
             name=rule['name'],
-            permission_list=json.dumps(
-                rule.get('permissions', [])),  # 序列化为 JSON 字符串
-            user_list=json.dumps(rule.get('users', [])),  # 序列化为 JSON 字符串
+            permission_list=json.dumps(permission_ids),
+            user_list=json.dumps(users_data),
             create_time=datetime.now()
         )
         session.add(new_rule)
