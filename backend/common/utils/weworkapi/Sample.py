@@ -6,7 +6,7 @@
 # File Name: Sample.py
 # Description: WXBizJsonMsgCrypt 使用demo文件
 #########################################################################
-from WXBizJsonMsgCrypt import WXBizJsonMsgCrypt
+from common.utils.weworkapi.WXBizJsonMsgCrypt import WXBizJsonMsgCrypt
 import sys
 import json
 

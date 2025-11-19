@@ -17,8 +17,7 @@ from Crypto.Cipher import AES
 import sys
 import socket
 import json
-
-import ierror 
+import common.utils.weworkapi.ierror as ierror
 
 """
 关于Crypto.Cipher模块，ImportError: No module named 'Crypto'解决方案

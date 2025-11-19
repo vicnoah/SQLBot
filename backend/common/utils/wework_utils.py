@@ -7,17 +7,7 @@ import os
 from typing import Optional, Dict, Any
 from common.core.config import settings
 from common.utils.utils import SQLBotLogUtil
-
-# 添加加解密库到路径
-wework_api_path = os.path.join(os.path.dirname(__file__), 'weworkapi')
-if wework_api_path not in sys.path:
-    sys.path.insert(0, wework_api_path)
-
-try:
-    from WXBizJsonMsgCrypt import WXBizJsonMsgCrypt
-except ImportError:
-    SQLBotLogUtil.error("无法导入企业微信加解密库")
-    WXBizJsonMsgCrypt = None
+from common.utils.weworkapi.WXBizJsonMsgCrypt import WXBizJsonMsgCrypt
 
 
 class WeWorkOAuthClient:
