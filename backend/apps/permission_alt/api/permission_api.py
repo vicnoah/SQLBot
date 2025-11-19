@@ -124,44 +124,6 @@ async def list_rules_paginated(
         "total_pages": (len(formatted_rules) + pageSize - 1) // pageSize
     }
 
-
-# @router.post("/save")
-# @require_space_admin
-# async def save_rule(session: SessionDep, trans: Trans, current_user: CurrentUser, rule: dict):
-#     """保存权限规则组(创建或更新)"""
-#     # 如果有 id 则更新,否则创建
-#     if rule.get('id'):
-#         # 更新现有规则
-#         db_rule = session.get(DsRules, rule['id'])
-#         if not db_rule:
-#             raise HTTPException(status_code=404, detail="Rule not found")
-
-#         # 更新字段
-#         db_rule.name = rule.get('name', db_rule.name)
-#         db_rule.permission_list = rule.get(
-#             'permissions', db_rule.permission_list)
-#         db_rule.user_list = rule.get('users', db_rule.user_list)
-
-#         session.commit()
-#         session.refresh(db_rule)
-#         return db_rule
-#     else:
-#         # 创建新规则
-#         import json
-#         from datetime import datetime
-
-#         new_rule = DsRules(
-#             enable=True,
-#             name=rule['name'],
-#             permission_list=json.dumps(rule.get('permissions', [])),
-#             user_list=json.dumps(rule.get('users', [])),
-#             create_time=datetime.now()
-#         )
-#         session.add(new_rule)
-#         session.commit()
-#         session.refresh(new_rule)
-#         return new_rule
-
 # @router.post("/save")
 # @require_space_admin
 # async def save_rule(session: SessionDep, trans: Trans, current_user: CurrentUser, rule: dict):
@@ -178,8 +140,8 @@ async def list_rules_paginated(
 #         perm_id = perm.get('id')
 
 #         # 判断是否为真实的数据库 ID
-#         # 前端生成的临时 ID 通常是时间戳(13位数字),远大于数据库自增 ID
-#         is_real_db_id = perm_id and isinstance(perm_id, int) and perm_id < 2147483647
+#         is_real_db_id = perm_id and isinstance(
+#             perm_id, int) and perm_id < 2147483647
 
 #         # 准备权限数据
 #         permission_obj = DsPermission(
@@ -188,8 +150,11 @@ async def list_rules_paginated(
 #             type=perm.get('type'),
 #             ds_id=perm.get('ds_id'),
 #             table_id=perm.get('table_id'),
-#             expression_tree=perm.get('expression_tree') if isinstance(perm.get('expression_tree'), str) else json.dumps(perm.get('expression_tree', {})),
-#             permissions=perm.get('permissions') if isinstance(perm.get('permissions'), str) else json.dumps(perm.get('permissions', [])),
+#             name=perm.get('name'),  # 添加这一行
+#             expression_tree=perm.get('expression_tree') if isinstance(perm.get(
+#                 'expression_tree'), str) else json.dumps(perm.get('expression_tree', {})),
+#             permissions=perm.get('permissions') if isinstance(
+#                 perm.get('permissions'), str) else json.dumps(perm.get('permissions', [])),
 #             create_time=datetime.now()
 #         )
 
@@ -200,25 +165,21 @@ async def list_rules_paginated(
 #                 db_permission.type = permission_obj.type
 #                 db_permission.ds_id = permission_obj.ds_id
 #                 db_permission.table_id = permission_obj.table_id
+#                 db_permission.name = permission_obj.name  # 添加这一行
 #                 db_permission.expression_tree = permission_obj.expression_tree
 #                 db_permission.permissions = permission_obj.permissions
 #                 session.commit()
 #                 session.refresh(db_permission)
 #                 permission_ids.append(db_permission.id)
 #             else:
-#                 # ID 不存在,创建新权限
-#                 session.add(permission_obj)
-#                 session.flush()
-#                 session.refresh(permission_obj)
-#                 permission_ids.append(permission_obj.id)
+#                 raise HTTPException(
+#                     status_code=404, detail="Permission not found")
 #         else:
-#             # 创建新权限(临时 ID 或无 ID)
+#             # 创建新权限
 #             session.add(permission_obj)
-#             session.flush()
+#             session.commit()
 #             session.refresh(permission_obj)
 #             permission_ids.append(permission_obj.id)
-
-#     session.commit()
 
 #     # 第二步: 保存或更新规则组到 ds_rules 表
 #     if rule.get('id'):
@@ -248,6 +209,7 @@ async def list_rules_paginated(
 #         session.refresh(new_rule)
 #         return new_rule
 
+
 @router.post("/save")
 @require_space_admin
 async def save_rule(session: SessionDep, trans: Trans, current_user: CurrentUser, rule: dict):
@@ -258,23 +220,30 @@ async def save_rule(session: SessionDep, trans: Trans, current_user: CurrentUser
     permissions_data = rule.get('permissions', [])
     users_data = rule.get('users', [])
 
+    # 如果是更新操作,先获取旧的权限 ID 列表
+    old_permission_ids = []
+    if rule.get('id'):
+        db_rule = session.get(DsRules, rule['id'])
+        if db_rule and db_rule.permission_list:
+            try:
+                old_permission_ids = json.loads(db_rule.permission_list)
+            except:
+                old_permission_ids = []
+
     # 第一步: 保存或更新权限规则到 ds_permission 表
     permission_ids = []
     for perm in permissions_data:
         perm_id = perm.get('id')
-
-        # 判断是否为真实的数据库 ID
         is_real_db_id = perm_id and isinstance(
             perm_id, int) and perm_id < 2147483647
 
-        # 准备权限数据
         permission_obj = DsPermission(
             enable=True,
             auth_target_type='USER',
             type=perm.get('type'),
             ds_id=perm.get('ds_id'),
             table_id=perm.get('table_id'),
-            name=perm.get('name'),  # 添加这一行
+            name=perm.get('name'),
             expression_tree=perm.get('expression_tree') if isinstance(perm.get(
                 'expression_tree'), str) else json.dumps(perm.get('expression_tree', {})),
             permissions=perm.get('permissions') if isinstance(
@@ -283,13 +252,12 @@ async def save_rule(session: SessionDep, trans: Trans, current_user: CurrentUser
         )
 
         if is_real_db_id:
-            # 更新现有权限
             db_permission = session.get(DsPermission, perm_id)
             if db_permission:
                 db_permission.type = permission_obj.type
                 db_permission.ds_id = permission_obj.ds_id
                 db_permission.table_id = permission_obj.table_id
-                db_permission.name = permission_obj.name  # 添加这一行
+                db_permission.name = permission_obj.name
                 db_permission.expression_tree = permission_obj.expression_tree
                 db_permission.permissions = permission_obj.permissions
                 session.commit()
@@ -299,15 +267,43 @@ async def save_rule(session: SessionDep, trans: Trans, current_user: CurrentUser
                 raise HTTPException(
                     status_code=404, detail="Permission not found")
         else:
-            # 创建新权限
             session.add(permission_obj)
             session.commit()
             session.refresh(permission_obj)
             permission_ids.append(permission_obj.id)
 
-    # 第二步: 保存或更新规则组到 ds_rules 表
+    # 第二步: 删除不再被引用的权限记录
+    if old_permission_ids:
+        # 找出被删除的权限 ID
+        deleted_permission_ids = set(old_permission_ids) - set(permission_ids)
+
+        for perm_id in deleted_permission_ids:
+            # 检查该权限是否被其他规则组引用
+            other_rules = session.query(DsRules).filter(
+                DsRules.id != rule.get('id')
+            ).all()
+
+            is_referenced = False
+            for other_rule in other_rules:
+                if other_rule.permission_list:
+                    try:
+                        other_perm_list = json.loads(
+                            other_rule.permission_list)
+                        if perm_id in other_perm_list:
+                            is_referenced = True
+                            break
+                    except:
+                        continue
+
+            # 如果没有被其他规则组引用,则删除
+            if not is_referenced:
+                db_permission = session.get(DsPermission, perm_id)
+                if db_permission:
+                    session.delete(db_permission)
+                    session.commit()
+
+    # 第三步: 保存或更新规则组到 ds_rules 表
     if rule.get('id'):
-        # 更新现有规则组
         db_rule = session.get(DsRules, rule['id'])
         if not db_rule:
             raise HTTPException(status_code=404, detail="Rule not found")
@@ -320,7 +316,6 @@ async def save_rule(session: SessionDep, trans: Trans, current_user: CurrentUser
         session.refresh(db_rule)
         return db_rule
     else:
-        # 创建新规则组
         new_rule = DsRules(
             enable=True,
             name=rule['name'],
