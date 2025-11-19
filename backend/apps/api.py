@@ -4,6 +4,7 @@ from apps.chat.api import chat
 from apps.dashboard.api import dashboard_api
 from apps.data_training.api import data_training
 from apps.datasource.api import datasource, table_relation
+from apps.permission_alt.api import permission_api
 from apps.mcp import mcp
 from apps.system.api import login, user, aimodel, workspace, assistant, wework
 from apps.terminology.api import terminology
@@ -22,3 +23,4 @@ api_router.include_router(chat.router)
 api_router.include_router(dashboard_api.router)
 api_router.include_router(mcp.router)
 api_router.include_router(table_relation.router)
+api_router.include_router(permission_api.router)
