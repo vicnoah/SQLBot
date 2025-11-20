@@ -62,10 +62,8 @@ async def list_rules_paginated(
 
         # 解析 user_list
         try:
-            user_list_raw = json.loads(
+            users = json.loads(
                 rule.user_list) if rule.user_list else []
-            users = [int(uid) if isinstance(uid, str)
-                     else uid for uid in user_list_raw]
         except (json.JSONDecodeError, TypeError, ValueError):
             users = []
 

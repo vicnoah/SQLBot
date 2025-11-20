@@ -1,4 +1,5 @@
 import os
+import debugpy
 
 # License functionality removed
 # import sqlbot_xpack
@@ -23,6 +24,34 @@ from common.core.sqlbot_cache import init_sqlbot_cache
 from common.utils.embedding_threads import fill_empty_terminology_embeddings, fill_empty_data_training_embeddings
 from common.utils.utils import SQLBotLogUtil
 
+# 环境变量控制调试
+DEBUG_ENABLED = os.getenv("DEBUG_ENABLED", "false").lower() == "true"
+DEBUG_PORT = int(os.getenv("DEBUG_PORT", "5678"))
+
+print(f"🔧 调试模式: {DEBUG_ENABLED}")
+print(f"🔧 调试端口: {DEBUG_PORT}")
+
+# 启用调试（仅在调试模式下运行）
+def setup_debugging():
+    if not DEBUG_ENABLED:
+        print("🔧 调试模式未启用")
+        return
+    
+    try:
+        # 检查是否在调试模式下运行
+        debugpy.listen(("0.0.0.0", DEBUG_PORT))
+        print(f"🎯 调试器已启动，等待连接... (端口 {DEBUG_PORT})")
+        
+        # 可选：设置断点自动等待连接
+        DEBUG_WAIT_FOR_CLIENT = os.getenv("DEBUG_WAIT_FOR_CLIENT", "false").lower() == "true"
+        if DEBUG_WAIT_FOR_CLIENT:
+            debugpy.wait_for_client()
+            print("🔌 调试器已连接")
+    except Exception as e:
+        print(f"❌ 调试器设置失败: {e}")
+
+# 在应用启动前调用
+setup_debugging()
 
 def run_migrations():
     try:
