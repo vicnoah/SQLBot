@@ -1,5 +1,5 @@
 FROM python:3.11-slim-bookworm AS python-builder
-FROM registry.cn-qingdao.aliyuncs.com/dataease/postgres:17.6
+FROM harbor.vectec.io/sqlbot/postgres:17.6
 
 # python environment
 COPY --from=python-builder /usr/local /usr/local

@@ -1,6 +1,6 @@
 # Build sqlbot
-FROM ghcr.io/1panel-dev/maxkb-vector-model:v1.0.1 AS vector-model
-FROM --platform=${BUILDPLATFORM} registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-base:latest AS sqlbot-ui-builder
+FROM harbor.vectec.io/sqlbot/maxkb-vector-model:v1.0.1 AS vector-model
+FROM --platform=${BUILDPLATFORM} harbor.vectec.io/sqlbot/sqlbot-base:latest AS sqlbot-ui-builder
 ENV SQLBOT_HOME=/opt/sqlbot
 ENV APP_HOME=${SQLBOT_HOME}/app
 ENV UI_HOME=${SQLBOT_HOME}/frontend
@@ -9,10 +9,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN mkdir -p ${APP_HOME} ${UI_HOME}
 
 COPY frontend /tmp/frontend
-RUN cd /tmp/frontend && npm install && npm run build && mv dist ${UI_HOME}/dist
+RUN npm install -g pnpm@10.14.0 && cd /tmp/frontend && pnpm install --registry https://registry.npmmirror.com && pnpm run build && mv dist ${UI_HOME}/dist
 
 
-FROM registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-base:latest AS sqlbot-builder
+FROM harbor.vectec.io/sqlbot/sqlbot-base:latest AS sqlbot-builder
 # Set build environment variables
 ENV PYTHONUNBUFFERED=1
 ENV SQLBOT_HOME=/opt/sqlbot
@@ -44,11 +44,12 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --extra cpu
 
 # Build g2-ssr
-FROM registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-base:latest AS ssr-builder
+FROM harbor.vectec.io/sqlbot/sqlbot-base:latest AS ssr-builder
 
 WORKDIR /app
 
 # Install build dependencies
+RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential python3 pkg-config \
     libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev \
@@ -58,14 +59,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # configure npm
 RUN npm config set fund false \
     && npm config set audit false \
-    && npm config set progress false
+    && npm config set progress false \
+    && npm config set registry https://registry.npmmirror.com
 
 COPY g2-ssr/app.js g2-ssr/package.json /app/
 COPY g2-ssr/charts/* /app/charts/
 RUN npm install
 
 # Runtime stage
-FROM --platform=${BUILDPLATFORM} registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-python-pg:latest
+FROM --platform=${BUILDPLATFORM} harbor.vectec.io/sqlbot/sqlbot-python-pg:latest
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone
