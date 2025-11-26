@@ -6,11 +6,24 @@ ENV APP_HOME=${SQLBOT_HOME}/app
 ENV UI_HOME=${SQLBOT_HOME}/frontend
 ENV DEBIAN_FRONTEND=noninteractive
 
+ENV CI=true
+ENV PNPM_FORCE=true
+
+# 二进制包镜像
+ENV npm_config_sharp_binary_host=https://registry.npmmirror.com/-/binary/sharp
+ENV SASS_BINARY_SITE=https://registry.npmmirror.com/-/binary/node-sass
+ENV ELECTRON_MIRROR=https://registry.npmmirror.com/-/binary/electron
+
 RUN mkdir -p ${APP_HOME} ${UI_HOME}
 
 COPY frontend /tmp/frontend
-RUN npm install -g pnpm@10.14.0 && cd /tmp/frontend && pnpm install --registry https://registry.npmmirror.com && pnpm run build && mv dist ${UI_HOME}/dist
-
+RUN npm config set registry https://registry.npmmirror.com \
+    && npm install -g pnpm@10.14.0 \
+    && pnpm config set registry https://registry.npmmirror.com \
+    && cd /tmp/frontend \
+    && pnpm install \
+    && pnpm run build \
+    && mv dist ${UI_HOME}/dist
 
 FROM harbor.vectec.io/sqlbot/sqlbot-base:latest AS sqlbot-builder
 # Set build environment variables
@@ -23,6 +36,12 @@ ENV PATH="${APP_HOME}/.venv/bin:$PATH"
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 ENV DEBIAN_FRONTEND=noninteractive
+
+ENV UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple/
+ENV UV_EXTRA_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple/
+ENV UV_TIMEOUT=3000
+ENV UV_HTTP_TIMEOUT=3000
+ENV UV_RETRIES=5
 
 # Create necessary directories
 RUN mkdir -p ${APP_HOME} ${UI_HOME}
@@ -46,9 +65,25 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Build g2-ssr
 FROM harbor.vectec.io/sqlbot/sqlbot-base:latest AS ssr-builder
 
+ENV npm_config_build_from_source=true
+ENV npm_config_canvas_binary_host_mirror=https://registry.npmmirror.com/-/binary/canvas
+ENV npm_config_python_mirror=https://registry.npmmirror.com/-/binary/python
+ENV npm_config_electron_mirror=https://registry.npmmirror.com/-/binary/electron
+ENV npm_config_sass_binary_site=https://registry.npmmirror.com/-/binary/node-sass
+
+# 设置 node-gyp 使用国内镜像
+ENV NODEJS_ORG_MIRROR=https://registry.npmmirror.com/-/binary/node
+ENV NODE_GYP_FORCE_PYTHON=python3
+
 WORKDIR /app
 
-# Install build dependencies
+# 配置 npm 镜像源和网络设置
+RUN npm config set fund false \
+    && npm config set audit false \
+    && npm config set progress false \
+    && npm config set registry https://registry.npmmirror.com
+
+# 安装系统依赖
 RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential python3 pkg-config \
@@ -56,15 +91,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpixman-1-dev libfreetype6-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# configure npm
-RUN npm config set fund false \
-    && npm config set audit false \
-    && npm config set progress false \
-    && npm config set registry https://registry.npmmirror.com
-
-COPY g2-ssr/app.js g2-ssr/package.json /app/
-COPY g2-ssr/charts/* /app/charts/
+# 先只复制 package.json 进行依赖安装（利用 Docker 缓存）
+COPY g2-ssr/package.json /app/
 RUN npm install
+
+# 再复制其他文件
+COPY g2-ssr/app.js /app/
+COPY g2-ssr/charts/* /app/charts/
 
 # Runtime stage
 FROM --platform=${BUILDPLATFORM} harbor.vectec.io/sqlbot/sqlbot-python-pg:latest
