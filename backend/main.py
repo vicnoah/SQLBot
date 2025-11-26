@@ -144,6 +144,8 @@ mcp.setup_server()
 
 # License functionality removed
 # sqlbot_xpack.init_fastapi_app(app)
+# 添加前端静态文件服务  
+app.mount("/", StaticFiles(directory="/opt/sqlbot/frontend/dist", html=True), name="static")
 if __name__ == "__main__":
     import uvicorn
 
