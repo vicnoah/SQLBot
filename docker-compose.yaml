@@ -27,6 +27,16 @@ services:
       # Logging
       LOG_LEVEL: "INFO"
       SQL_DEBUG: False
+      # 企业微信登录配置
+      WEWORK_CORP_ID: ''  # 企业ID
+      WEWORK_SECRET: ''  # 应用Secret
+      WEWORK_AGENT_ID: ''  # 应用AgentId
+      WEWORK_REDIRECT_URI: ''  # OAuth回调地址
+      WEWORK_ENABLED: True  # 是否启用企业微信登录
+      
+      # 企业微信回调配置(用于验证和解密回调消息)
+      WEWORK_TOKEN: ''  # 企业微信回调Token
+      WEWORK_ENCODING_AES_KEY: ''  # 企业微信回调EncodingAESKey
     volumes:
       - ./data/sqlbot/excel:/opt/sqlbot/data/excel
       - ./data/sqlbot/images:/opt/sqlbot/images
