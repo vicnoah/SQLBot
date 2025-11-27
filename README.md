@@ -2,8 +2,6 @@
 <h3 align="center">基于大模型和 RAG 的智能问数系统</h3>
 <h2 align="center">SQLBot 重制版部署文档</h2>
 
-您说得对！GitHub Markdown 中代码块需要正确的格式。我来修正这个问题：
-
 # SQLBot 部署文档
 
 ## 概述
