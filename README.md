@@ -1,5 +1,167 @@
 <p align="center"><img src="https://resource-fit2cloud-com.oss-cn-hangzhou.aliyuncs.com/sqlbot/sqlbot.png" alt="SQLBot" width="300" /></p>
 <h3 align="center">基于大模型和 RAG 的智能问数系统</h3>
+SQLBot 重制版部署文档
+
+概述
+
+本文档提供了 SQLBot 应用程序的 Docker 部署指南。SQLBot 是一个基于 PostgreSQL 数据库的应用程序，包含主应用服务和数据库服务。
+
+系统要求
+
+• Docker 20.10.0 或更高版本
+
+• Docker Compose 1.29.0 或更高版本
+
+• 至少 2GB 可用内存
+
+• 至少 10GB 可用磁盘空间
+
+部署步骤
+
+1. 准备工作
+
+1. 确保已安装 Docker 和 Docker Compose
+2. 创建项目目录：
+   mkdir -p sqlbot-deployment/data/{sqlbot/excel,sqlbot/images,sqlbot/logs,postgresql}
+   cd sqlbot-deployment
+   
+
+2. 创建 Docker Compose 文件
+
+在项目目录中创建 docker-compose.yml 文件，内容如下：
+version: '3.8'
+
+services:
+  sqlbot:
+    image: ghcr.io/vicnoah/sqlbot:latest
+    container_name: sqlbot
+    restart: always
+    networks:
+      - sqlbot-network
+    ports:
+      - 8000:8000
+      - 8001:8001
+    environment:
+      # Database configuration
+      POSTGRES_SERVER: sqlbot-db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: sqlbot
+      POSTGRES_USER: sqlbot
+      POSTGRES_PASSWORD: sqlbot
+      # Project basic settings
+      PROJECT_NAME: "SQLBot"
+      DEFAULT_PWD: "SQLBot@123456"
+      # MCP settings
+      SERVER_IMAGE_HOST: https://YOUR_SERVE_IP:MCP_PORT/images/
+      # Auth & Security
+      SECRET_KEY: y5txe1mRmS_JpOrUzFzHEu-kIQn3lf7ll0AOv9DQh0s
+      # CORS settings
+      BACKEND_CORS_ORIGINS: "http://localhost,http://localhost:5173,https://localhost,https://localhost:5173"
+      # Logging
+      LOG_LEVEL: "INFO"
+      SQL_DEBUG: False
+    volumes:
+      - ./data/sqlbot/excel:/opt/sqlbot/data/excel
+      - ./data/sqlbot/images:/opt/sqlbot/images
+      - ./data/sqlbot/logs:/opt/sqlbot/logs
+    depends_on:
+      sqlbot-db:
+        condition: service_healthy
+
+  sqlbot-db:
+    image: pgvector/pgvector:pg17-trixie
+    container_name: sqlbot-db
+    restart: always
+    networks:
+      - sqlbot-network
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: sqlbot
+      POSTGRES_USER: sqlbot
+      POSTGRES_PASSWORD: sqlbot
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+networks:
+  sqlbot-network:
+
+
+3. 配置环境变量
+
+根据您的实际环境修改以下配置：
+
+1. SERVER_IMAGE_HOST: 替换 YOUR_SERVE_IP 和 MCP_PORT 为实际的服务器 IP 和端口
+2. BACKEND_CORS_ORIGINS: 添加您的前端应用地址
+3. SECRET_KEY: 建议生成新的密钥替换默认值
+
+4. 启动服务
+
+docker-compose up -d
+
+
+5. 验证部署
+
+1. 检查容器状态：
+   docker-compose ps
+   
+   应该看到两个服务都处于运行状态。
+
+2. 检查应用日志：
+   docker-compose logs sqlbot
+   
+
+3. 访问应用：
+   • API 服务: http://localhost:8000
+
+   • 其他服务端口: 8001
+
+访问应用
+
+部署完成后，请按以下步骤访问 SQLBot 管理界面：
+
+1. 打开浏览器，访问：http://您的服务器IP:8000
+
+2. 使用以下默认凭据登录：
+   • 用户名: admin
+
+   • 密码: SQLBot@123456
+
+3. 登录成功后，您将看到 SQLBot 的主管理界面
+
+主页面，包含多租户等功能
+<img width="2183" height="1170" alt="image" src="https://github.com/user-attachments/assets/4c2814d9-dead-4527-8e11-95a3bf906d4b" />
+租户空间管理
+<img width="2164" height="1165" alt="image" src="https://github.com/user-attachments/assets/52ba2ec3-5434-4f0f-ac04-2db613d39111" />
+AI模型设置
+<img width="2173" height="1165" alt="image" src="https://github.com/user-attachments/assets/48780908-cdc1-4f5e-a601-a102bdb1618f" />
+行列权限管理
+<img width="2173" height="1165" alt="image" src="https://github.com/user-attachments/assets/d0f9a1ef-c63a-4a68-b745-f071ab23a2de" />
+SQL示例库
+<img width="2173" height="1165" alt="image" src="https://github.com/user-attachments/assets/2cecea9d-0d17-4496-aa42-f19801532ffc" />
+
+
+数据持久化
+
+• 数据库数据存储在 ./data/postgresql 目录
+
+• 应用数据存储在 ./data/sqlbot 下的各个子目录中
+
+维护命令
+
+• 停止服务: docker-compose down
+
+• 重启服务: docker-compose restart
+
+• 更新镜像: 
+  docker-compose pull
+  docker-compose up -d
+
 <p align="center">
   <a href="https://github.com/dataease/SQLBot/releases/latest"><img src="https://img.shields.io/github/v/release/dataease/SQLBot" alt="Latest release"></a>
   <a href="https://github.com/dataease/SQLBot"><img src="https://img.shields.io/github/stars/dataease/SQLBot?color=%231890FF&style=flat-square" alt="Stars"></a>    
