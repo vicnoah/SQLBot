@@ -1,6 +1,6 @@
 services:
   sqlbot:
-    image: harbor.vectec.io/sqlbot/sqlbot:latest
+    image: ghcr.io/vicnoah/sqlbot:latest
     container_name: sqlbot
     restart: always
     networks:
@@ -27,16 +27,6 @@ services:
       # Logging
       LOG_LEVEL: "INFO"
       SQL_DEBUG: False
-      # 企业微信登录配置
-      WEWORK_CORP_ID: ''  # 企业ID
-      WEWORK_SECRET: ''  # 应用Secret
-      WEWORK_AGENT_ID: ''  # 应用AgentId
-      WEWORK_REDIRECT_URI: ''  # OAuth回调地址
-      WEWORK_ENABLED: True  # 是否启用企业微信登录
-      
-      # 企业微信回调配置(用于验证和解密回调消息)
-      WEWORK_TOKEN: ''  # 企业微信回调Token
-      WEWORK_ENCODING_AES_KEY: ''  # 企业微信回调EncodingAESKey
     volumes:
       - ./data/sqlbot/excel:/opt/sqlbot/data/excel
       - ./data/sqlbot/images:/opt/sqlbot/images
@@ -46,7 +36,7 @@ services:
         condition: service_healthy
 
   sqlbot-db:
-    image: docker.1ms.run/pgvector/pgvector:pg17-trixie
+    image: pgvector/pgvector:pg17-trixie
     container_name: sqlbot-db
     restart: always
     networks:
