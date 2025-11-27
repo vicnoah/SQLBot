@@ -22,8 +22,9 @@ SQLBot 重制版部署文档
 
 1. 确保已安装 Docker 和 Docker Compose
 2. 创建项目目录：
-   mkdir -p sqlbot-deployment/data/{sqlbot/excel,sqlbot/images,sqlbot/logs,postgresql}
+   ``` mkdir -p sqlbot-deployment/data/{sqlbot/excel,sqlbot/images,sqlbot/logs,postgresql}
    cd sqlbot-deployment
+   ```
    
 
 2. 创建 Docker Compose 文件
