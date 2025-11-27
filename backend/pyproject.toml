@@ -39,7 +39,7 @@ dependencies = [
     "pyyaml (>=6.0.2,<7.0.0)",
     "fastapi-mcp (>=0.3.4,<0.4.0)",
     "tabulate>=0.9.0",
-    "sqlbot-xpack>=0.0.3.40,<1.0.0",
+    # "sqlbot-xpack>=0.0.3.40,<1.0.0",
     "fastapi-cache2>=0.2.2",
     "sqlparse>=0.5.3",
     "redis>=6.2.0",
@@ -51,24 +51,26 @@ dependencies = [
     "dmpython>=2.5.22; platform_system != 'Darwin'",
     "redshift-connector>=2.1.8",
     "elasticsearch[requests] (>=7.10,<8.0)",
+    "debugpy>=1.8.17",
 ]
 
 [project.optional-dependencies]
 cpu = [
     "torch>=2.7.0",
 ]
-cu128 = [
-    "torch>=2.7.0",
-]
+
+# cu128 = [
+#     "torch>=2.7.0",
+# ]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
+url = "https://mirrors.nju.edu.cn/pytorch/whl/cpu"
 explicit = true
 
 [[tool.uv.index]]
 name = "pytorch-cu128"
-url = "https://download.pytorch.org/whl/cu128"
+url = "https://mirrors.nju.edu.cn/pytorch/whl/cu128"
 explicit = true
 
 [[tool.uv.index]]
@@ -85,16 +87,16 @@ explicit = true
 sqlbot-xpack = { index = "testpypi" }
 torch = [
     { index = "pytorch-cpu", extra = "cpu" },
-    { index = "pytorch-cu128", extra = "cu128" },
+    # { index = "pytorch-cu128", extra = "cu128" },
 ]
 
 [tool.uv]
-conflicts = [
-    [
-        { extra = "cpu" },
-        { extra = "cu128" },
-    ],
-]
+# conflicts = [
+#     [
+#         { extra = "cpu" },
+#         { extra = "cu128" },
+#     ],
+# ]
 dev-dependencies = [
     "pytest<8.0.0,>=7.4.3",
     "mypy<2.0.0,>=1.8.0",

@@ -17,6 +17,7 @@ class BaseUserPO(SQLModel):
     status: int = Field(default=0, nullable=False)
     create_time: int = Field(default_factory=get_timestamp, sa_type=BigInteger(), nullable=False)
     language: str = Field(max_length=255, default="zh-CN")
+    wework_userid: Optional[str] = Field(default=None, max_length=255, nullable=True)  # 企业微信用户ID
     
 class UserModel(SnowflakeBase, BaseUserPO, table=True):
     __tablename__ = "sys_user"

@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     FRONTEND_HOST: str = "http://localhost:5173"
-    FRONTEND_HOST_ALT: str = "http://localhost:5174"
+    FRONTEND_HOST_ALT: str = "http://localhost:5173"
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
@@ -115,6 +115,17 @@ class Settings(BaseSettings):
     DS_EMBEDDING_COUNT: int = 20
 
     ORACLE_CLIENT_PATH: str = '/opt/sqlbot/db_client/oracle_instant_client'
+
+    # 企业微信登录配置
+    WEWORK_CORP_ID: str = ''  # 企业ID
+    WEWORK_SECRET: str = ''  # 应用Secret
+    WEWORK_AGENT_ID: str = ''  # 应用AgentId
+    WEWORK_REDIRECT_URI: str = ''  # OAuth回调地址
+    WEWORK_ENABLED: bool = False  # 是否启用企业微信登录
+    
+    # 企业微信回调配置(用于验证和解密回调消息)
+    WEWORK_TOKEN: str = ''  # 企业微信回调Token
+    WEWORK_ENCODING_AES_KEY: str = ''  # 企业微信回调EncodingAESKey
 
 
 settings = Settings()  # type: ignore

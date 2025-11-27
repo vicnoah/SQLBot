@@ -8,3 +8,4 @@ htmlcov
 .venv
 *.egg
 *.lock
+!uv.lock

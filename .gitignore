@@ -1,13 +1,12 @@
 .vscode
 *.out
-backend/data
+backend/data/*
+!backend/data/models/
 node_modules/
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
-*.lock
-*-lock.json
 components.d.ts
 
 # Byte-compiled / optimized / DLL files

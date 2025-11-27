@@ -17,9 +17,9 @@ from langchain_community.utilities import SQLDatabase
 from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage, BaseMessageChunk
 from sqlalchemy import and_, select
 from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlbot_xpack.custom_prompt.curd.custom_prompt import find_custom_prompts
-from sqlbot_xpack.custom_prompt.models.custom_prompt_model import CustomPromptTypeEnum
-from sqlbot_xpack.license.license_manage import SQLBotLicenseUtil
+# from sqlbot_xpack.custom_prompt.curd.custom_prompt import find_custom_prompts
+# from sqlbot_xpack.custom_prompt.models.custom_prompt_model import CustomPromptTypeEnum
+# from sqlbot_xpack.license.license_manage import SQLBotLicenseUtil
 from sqlmodel import Session
 
 from apps.ai_model.model_factory import LLMConfig, LLMFactory, get_default_config
@@ -34,7 +34,7 @@ from apps.chat.models.chat_model import ChatQuestion, ChatRecord, Chat, RenameCh
     ChatFinishStep
 from apps.data_training.curd.data_training import get_training_template
 from apps.datasource.crud.datasource import get_table_schema
-from apps.datasource.crud.permission import get_row_permission_filters, is_normal_user
+from apps.permission_alt.crud.permission_crud import get_row_permission_filters, is_normal_user
 from apps.datasource.embedding.ds_embedding import get_ds_embedding
 from apps.datasource.models.datasource import CoreDatasource
 from apps.db.db import exec_sql, get_version, check_connection
@@ -241,9 +241,9 @@ class LLMService:
         ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
         self.chat_question.terminologies = get_terminology_template(_session, self.chat_question.question,
                                                                     self.current_user.oid, ds_id)
-        if SQLBotLicenseUtil.valid():
-            self.chat_question.custom_prompt = find_custom_prompts(_session, CustomPromptTypeEnum.ANALYSIS,
-                                                                   self.current_user.oid, ds_id)
+        # if SQLBotLicenseUtil.valid():
+        #     self.chat_question.custom_prompt = find_custom_prompts(_session, CustomPromptTypeEnum.ANALYSIS,
+        #                                                            self.current_user.oid, ds_id)
 
         analysis_msg.append(SystemMessage(content=self.chat_question.analysis_sys_question()))
         analysis_msg.append(HumanMessage(content=self.chat_question.analysis_user_question()))
@@ -289,10 +289,10 @@ class LLMService:
         data = get_chat_chart_data(_session, self.record.id)
         self.chat_question.data = orjson.dumps(data.get('data')).decode()
 
-        if SQLBotLicenseUtil.valid():
-            ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
-            self.chat_question.custom_prompt = find_custom_prompts(_session, CustomPromptTypeEnum.PREDICT_DATA,
-                                                                   self.current_user.oid, ds_id)
+        # if SQLBotLicenseUtil.valid():
+        #     ds_id = self.ds.id if isinstance(self.ds, CoreDatasource) else None
+        #     self.chat_question.custom_prompt = find_custom_prompts(_session, CustomPromptTypeEnum.PREDICT_DATA,
+        #                                                            self.current_user.oid, ds_id)
 
         predict_msg: List[Union[BaseMessage, dict[str, Any]]] = []
         predict_msg.append(SystemMessage(content=self.chat_question.predict_sys_question()))
@@ -522,9 +522,9 @@ class LLMService:
                                                                         ds_id)
             self.chat_question.data_training = get_training_template(_session, self.chat_question.question, ds_id,
                                                                      oid)
-            if SQLBotLicenseUtil.valid():
-                self.chat_question.custom_prompt = find_custom_prompts(_session, CustomPromptTypeEnum.GENERATE_SQL,
-                                                                       oid, ds_id)
+            # if SQLBotLicenseUtil.valid():
+            #     self.chat_question.custom_prompt = find_custom_prompts(_session, CustomPromptTypeEnum.GENERATE_SQL,
+            #                                                            oid, ds_id)
 
             self.init_messages()
 
@@ -919,10 +919,10 @@ class LLMService:
                                                                             oid, ds_id)
                 self.chat_question.data_training = get_training_template(_session, self.chat_question.question,
                                                                          ds_id, oid)
-                if SQLBotLicenseUtil.valid():
-                    self.chat_question.custom_prompt = find_custom_prompts(_session,
-                                                                           CustomPromptTypeEnum.GENERATE_SQL,
-                                                                           oid, ds_id)
+                # if SQLBotLicenseUtil.valid():
+                #     self.chat_question.custom_prompt = find_custom_prompts(_session,
+                #                                                            CustomPromptTypeEnum.GENERATE_SQL,
+                #                                                            oid, ds_id)
                 self.init_messages()
 
             # return id

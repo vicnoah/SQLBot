@@ -18,4 +18,16 @@ export const AuthApi = {
   },
   logout: () => request.post('/auth/logout'),
   info: () => request.get('/user/info'),
+  
+  // 企业微信登录相关接口
+  getWeWorkAuthUrl: () => request.get<{ auth_url: string; enabled: boolean }>('/wework/auth-url'),
+  weWorkCallback: (code: string, state?: string) => {
+    const params: any = { code }
+    if (state) params.state = state
+    return request.get<{
+      access_token: string
+      token_type: string
+    }>('/wework/callback', { params })
+  },
+  getWeWorkConfig: () => request.get<{ enabled: boolean; corpId: string; agentId: string }>('/wework/config'),
 }

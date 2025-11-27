@@ -51,6 +51,14 @@
                 $t('common.login_')
               }}</el-button>
             </el-form-item>
+            
+            <!-- 企业微信登录面板 -->
+            <div v-if="weWorkEnabled" class="wework-login-container">
+              <div class="divider">
+                <span>或</span>
+              </div>
+              <div id="ww_login" class="ww-login-panel"></div>
+            </div>
           </el-form>
         </div>
       </div>
@@ -59,10 +67,14 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
+import { AuthApi } from '@/api/login'
+import { ElMessage } from 'element-plus'
+import * as ww from '@wecom/jssdk'
+import { WWLoginType, WWLoginRedirectType } from '@wecom/jssdk'
 import custom_small from '@/assets/svg/logo-custom_small.svg'
 import LOGO_fold from '@/assets/LOGO-fold.svg'
 import login_image from '@/assets/embedded/login_image.png'
@@ -78,6 +90,11 @@ const loginForm = ref({
   username: '',
   password: '',
 })
+
+// 企业微信登录相关
+const weWorkEnabled = ref(false)
+const weWorkConfig = ref<any>(null)
+let wwLoginPanel: any = null
 
 const bg = computed(() => {
   return appearanceStore.getBg || (appearanceStore.isBlue ? loginImage : login_image)
@@ -103,6 +120,88 @@ const submitForm = () => {
     }
   })
 }
+
+// 初始化企业微信登录组件
+const initWeWorkLoginPanel = async () => {
+  try {
+    const config = await AuthApi.getWeWorkConfig()
+    console.log('企业微信配置:', config)
+    weWorkEnabled.value = config.enabled
+    
+    if (!config.enabled) {
+      console.log('企业微信登录未启用')
+      return
+    }
+    
+    // 检查必要的配置项
+    if (!config.corpId || !config.agentId) {
+      console.error('企业微信配置不完整:', config)
+      ElMessage.warning('企业微信登录配置不完整,请联系管理员')
+      weWorkEnabled.value = false
+      return
+    }
+    
+    weWorkConfig.value = config
+    
+    // 等待下一个 tick,确保 DOM 已经渲染
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    // 检查挂载元素是否存在
+    const mountEl = document.querySelector('#ww_login')
+    if (!mountEl) {
+      console.error('企业微信登录挂载元素不存在')
+      return
+    }
+    
+    console.log('开始创建企业微信登录面板...')
+    // 使用 @wecom/jssdk 创建登录面板
+    wwLoginPanel = ww.createWWLoginPanel({
+      el: '#ww_login',
+      params: {
+        login_type: WWLoginType.corpApp,
+        appid: config.corpId,
+        agentid: config.agentId,
+        redirect_uri: window.location.origin + '/login',
+        state: 'LOGIN_STATE',
+        redirect_type: WWLoginRedirectType.callback, // 使用回调方式
+      },
+      onCheckWeComLogin({ isWeComLogin }: any) {
+        console.log('企业微信桌面端登录状态:', isWeComLogin)
+      },
+      onLoginSuccess: async ({ code }: any) => {
+        console.log('企业微信登录成功, code:', code)
+        try {
+          const res = await AuthApi.weWorkCallback(code, 'LOGIN_STATE')
+          userStore.setToken(res.access_token)
+          await userStore.info()
+          router.push('/chat')
+        } catch (error: any) {
+          ElMessage.error(error.message || '企业微信登录失败')
+        }
+      },
+      onLoginFail: (err: any) => {
+        console.error('企业微信登录失败:', err)
+        ElMessage.error(`登录失败: ${err.errcode || ''} ${err.errmsg || ''}`)
+      },
+    })
+    console.log('企业微信登录面板创建完成, panel:', wwLoginPanel)
+  } catch (error) {
+    console.error('初始化企业微信登录失败:', error)
+    weWorkEnabled.value = false
+  }
+}
+
+onMounted(() => {
+  // 初始化企业微信登录面板
+  initWeWorkLoginPanel()
+})
+
+onUnmounted(() => {
+  // 组件销毁时卸载登录面板
+  if (wwLoginPanel && wwLoginPanel.unmount) {
+    wwLoginPanel.unmount()
+  }
+})
 </script>
 
 <style lang="less" scoped>
@@ -181,6 +280,36 @@ const submitForm = () => {
           height: 45px;
           font-size: 16px;
           border-radius: 4px;
+        }
+        
+        .wework-login-container {
+          margin-top: 24px;
+          
+          .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: #999;
+            
+            &::before,
+            &::after {
+              content: '';
+              flex: 1;
+              height: 1px;
+              background: #dee0e3;
+            }
+            
+            span {
+              padding: 0 12px;
+              font-size: 14px;
+            }
+          }
+          
+          .ww-login-panel {
+            display: flex;
+            justify-content: center;
+            min-height: 380px;
+          }
         }
 
         .agreement {

@@ -63,6 +63,7 @@ const ruleListWithSearch = computed(() => {
     ele.name.toLowerCase().includes(keywords.value.toLowerCase())
   )
 })
+console.log(ruleListWithSearch)
 const tableColumnData = computed<any[]>(() => {
   if (!searchColumn.value) return columnForm.permissions
   return columnForm.permissions.filter((ele) =>
@@ -292,15 +293,26 @@ const beforeClose = () => {
 }
 
 const searchLoading = ref(false)
-const handleSearch = () => {
-  searchLoading.value = true
-  getList()
-    .then((res: any) => {
-      ruleList.value = res || []
-    })
-    .finally(() => {
-      searchLoading.value = false
-    })
+// const handleSearch = () => {
+//   searchLoading.value = true
+//   getList()
+//     .then((res: any) => {
+//       ruleList.value = res || []
+//     })
+//     .finally(() => {
+//       searchLoading.value = false
+//     })
+// }
+const handleSearch = () => {  
+  searchLoading.value = true  
+  getList()  
+    .then((res: any) => {  
+      // 从响应中提取 items 数组  
+      ruleList.value = res.data?.items || res.items || []  
+    })  
+    .finally(() => {  
+      searchLoading.value = false  
+    })  
 }
 handleSearch()
 const addHandler = () => {

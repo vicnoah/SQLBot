@@ -15,6 +15,7 @@ from apps.db.engine import get_engine_conn
 from common.core.config import settings
 from common.core.deps import SessionDep, CurrentUser, Trans
 from common.utils.utils import SQLBotLogUtil
+from common.core.decorators import require_space_admin
 from ..crud.datasource import get_datasource_list, check_status, create_ds, update_ds, delete_ds, getTables, getFields, \
     execSql, update_table_and_fields, getTablesByDs, chooseTables, preview, updateTable, updateField, get_ds, fieldEnum, \
     check_status_by_id
@@ -60,6 +61,7 @@ async def check_by_id(session: SessionDep, trans: Trans, ds_id: int):
 
 
 @router.post("/add", response_model=CoreDatasource)
+@require_space_admin
 async def add(session: SessionDep, trans: Trans, user: CurrentUser, ds: CreateDatasource):
     def inner():
         return create_ds(session, trans, user, ds)
@@ -76,6 +78,7 @@ async def choose_tables(session: SessionDep, trans: Trans, id: int, tables: List
 
 
 @router.post("/update", response_model=CoreDatasource)
+@require_space_admin
 async def update(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreDatasource):
     def inner():
         return update_ds(session, trans, user, ds)
@@ -84,6 +87,7 @@ async def update(session: SessionDep, trans: Trans, user: CurrentUser, ds: CoreD
 
 
 @router.post("/delete/{id}", response_model=CoreDatasource)
+@require_space_admin
 async def delete(session: SessionDep, id: int):
     return delete_ds(session, id)
 

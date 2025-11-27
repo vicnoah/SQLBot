@@ -1,15 +1,11 @@
 /**
  * RSA 加密工具类
- * 使用 Web Crypto API 实现 RSAOAEP 加密
- * 用于登录密码加密传输
+ * 使用 node-forge 实现 RSA-OAEP SHA256 加密
  */
+import forge from 'node-forge'
 import { request } from '@/utils/request'
 
-/**
- * RSA 加密工具
- */
 class RSAEncrypt {
-  private static publicKey: CryptoKey | null = null
   private static publicKeyPEM: string | null = null
 
   /**
@@ -29,67 +25,27 @@ class RSAEncrypt {
   }
 
   /**
-   * 从 PEM 格式导入公钥
-   */
-  private static async importPublicKey(): Promise<CryptoKey> {
-    if (!this.publicKey) {
-      try {
-        const pem = await this.getPublicKeyPEM()
-        
-        // 移除 PEM 头尾和换行符
-        const pemContents = pem
-          .replace(/-----BEGIN PUBLIC KEY-----/, '')
-          .replace(/-----END PUBLIC KEY-----/, '')
-          .replace(/\s/g, '')
-
-        // Base64 解码
-        const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0))
-        
-        // 导入公钥
-        this.publicKey = await window.crypto.subtle.importKey(
-          'spki',
-          binaryDer,
-          {
-            name: 'RSA-OAEP',
-            hash: 'SHA-256'
-          },
-          true,
-          ['encrypt']
-        )
-      } catch (err) {
-        console.error('公钥导入失败:', err)
-        throw new Error(`公钥导入失败: ${err}`)
-      }
-    }
-    return this.publicKey
-  }
-
-  /**
-   * 加密字符串
-   * @param plainText 明文
-   * @returns 加密后的密文（Base64 编码）
+   * 使用 RSA-OAEP SHA256 加密
+   * @param plainText 要加密的明文字符串
+   * @returns 加密后的 Base64 字符串
    */
   static async encrypt(plainText: string): Promise<string> {
     try {
-      const publicKey = await this.importPublicKey()
+      const publicKeyPEM = await this.getPublicKeyPEM()
       
-      // 将字符串转换为 Uint8Array
-      const encoder = new TextEncoder()
-      const dataBuffer = encoder.encode(plainText)
-
-      // 使用 RSA-OAEP 加密
-      const encryptedBuffer = await window.crypto.subtle.encrypt(
-        { 
-            name: 'RSA-OAEP'
-        },
-        publicKey,
-        dataBuffer
-      )
-
-      // 转换为 Base64
-      const encryptedBase64 = btoa(String.fromCharCode(...new Uint8Array(encryptedBuffer)))
+      // 解析 PEM 格式的公钥
+      const publicKey = forge.pki.publicKeyFromPem(publicKeyPEM)
       
-      return encryptedBase64
+      // 执行 RSA-OAEP 加密（使用 SHA256 作为散列函数）
+      const encrypted = publicKey.encrypt(plainText, 'RSA-OAEP', {
+        md: forge.md.sha256.create(), // OAEP 使用的哈希算法
+        mgf1: {
+          md: forge.md.sha256.create() // MGF1 使用的哈希算法
+        }
+      })
+      
+      // 将加密后的二进制数据转换为 Base64 格式
+      return forge.util.encode64(encrypted)
     } catch (error) {
       console.error('加密失败:', error)
       throw error
@@ -98,18 +54,15 @@ class RSAEncrypt {
 
   /**
    * 加密密码
-   * @param password 密码明文
-   * @returns 加密后的密码
    */
   static async encryptPassword(password: string): Promise<string> {
     return this.encrypt(password)
   }
 
   /**
-   * 清除缓存的公钥（用于测试或重新初始化）
+   * 清除缓存
    */
   static clearCache(): void {
-    this.publicKey = null
     this.publicKeyPEM = null
   }
 }
