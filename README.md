@@ -29,7 +29,7 @@ SQLBot 重制版部署文档
 2. 创建 Docker Compose 文件
 
 在项目目录中创建 docker-compose.yml 文件，内容如下：
-version: '3.8'
+``` version: '3.8'
 
 services:
   sqlbot:
@@ -90,7 +90,7 @@ services:
 
 networks:
   sqlbot-network:
-
+```
 
 3. 配置环境变量
 
