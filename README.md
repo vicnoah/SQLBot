@@ -2,37 +2,40 @@
 <h3 align="center">基于大模型和 RAG 的智能问数系统</h3>
 <h2 align="center">SQLBot 重制版部署文档</h2>
 
-概述
+您说得对！GitHub Markdown 中代码块需要正确的格式。我来修正这个问题：
+
+# SQLBot 部署文档
+
+## 概述
 
 本文档提供了 SQLBot 应用程序的 Docker 部署指南。SQLBot 是一个基于 PostgreSQL 数据库的应用程序，包含主应用服务和数据库服务。
 
-系统要求
+## 系统要求
 
-• Docker 20.10.0 或更高版本
+- Docker 20.10.0 或更高版本
+- Docker Compose 1.29.0 或更高版本
+- 至少 2GB 可用内存
+- 至少 10GB 可用磁盘空间
 
-• Docker Compose 1.29.0 或更高版本
+## 部署步骤
 
-• 至少 2GB 可用内存
+### 1. 准备工作
 
-• 至少 10GB 可用磁盘空间
+确保已安装 Docker 和 Docker Compose
 
-部署步骤
+### 2. 创建项目目录
 
-1. 准备工作
+```bash
+mkdir -p sqlbot-deployment/data/{sqlbot/excel,sqlbot/images,sqlbot/logs,postgresql}
+cd sqlbot-deployment
+```
 
-1. 确保已安装 Docker 和 Docker Compose
-2. 创建项目目录：
-   ```mkdir -p sqlbot-deployment/data/{sqlbot/excel,sqlbot/images,sqlbot/logs,postgresql}
-   ```
-   ```
-   cd sqlbot-deployment
-   ```
-   
+### 3. 创建 Docker Compose 文件
 
-2. 创建 Docker Compose 文件
+在项目目录中创建 `docker-compose.yml` 文件，内容如下：
 
-在项目目录中创建 docker-compose.yml 文件，内容如下：
-``` version: '3.8'
+```yaml
+version: '3.8'
 
 services:
   sqlbot:
@@ -95,45 +98,46 @@ networks:
   sqlbot-network:
 ```
 
-3. 配置环境变量
+### 4. 配置环境变量
 
 根据您的实际环境修改以下配置：
 
-1. SERVER_IMAGE_HOST: 替换 YOUR_SERVE_IP 和 MCP_PORT 为实际的服务器 IP 和端口
-2. BACKEND_CORS_ORIGINS: 添加您的前端应用地址
-3. SECRET_KEY: 建议生成新的密钥替换默认值
+1. `SERVER_IMAGE_HOST`: 替换 `YOUR_SERVE_IP` 和 `MCP_PORT` 为实际的服务器 IP 和端口
+2. `BACKEND_CORS_ORIGINS`: 添加您的前端应用地址
+3. `SECRET_KEY`: 建议生成新的密钥替换默认值
 
-4. 启动服务
+### 5. 启动服务
 
+```bash
 docker-compose up -d
+```
 
-
-5. 验证部署
+### 6. 验证部署
 
 1. 检查容器状态：
+   ```bash
    docker-compose ps
-   
+   ```
    应该看到两个服务都处于运行状态。
 
 2. 检查应用日志：
+   ```bash
    docker-compose logs sqlbot
-   
+   ```
 
 3. 访问应用：
-   • API 服务: http://localhost:8000
+   - API 服务: `http://localhost:8000`
+   - 其他服务端口: `8001`
 
-   • 其他服务端口: 8001
-
-访问应用
+## 访问应用
 
 部署完成后，请按以下步骤访问 SQLBot 管理界面：
 
-1. 打开浏览器，访问：http://您的服务器IP:8000
+1. 打开浏览器，访问：`http://您的服务器IP:8000`
 
 2. 使用以下默认凭据登录：
-   • 用户名: admin
-
-   • 密码: SQLBot@123456
+   - **用户名**: `admin`
+   - **密码**: `SQLBot@123456`
 
 3. 登录成功后，您将看到 SQLBot 的主管理界面
 
