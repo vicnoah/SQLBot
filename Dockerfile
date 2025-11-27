@@ -126,6 +126,7 @@ COPY --from=vector-model /opt/maxkb/app/model /opt/sqlbot/models
 
 WORKDIR ${SQLBOT_HOME}/app
 
+RUN mv ${SQLBOT_HOME}/app/data/models ${SQLBOT_HOME}/models
 RUN mkdir -p /opt/sqlbot/images /opt/sqlbot/g2-ssr
 
 EXPOSE 3000 8000 8001 5432

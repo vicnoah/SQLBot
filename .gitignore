@@ -1,6 +1,7 @@
 .vscode
 *.out
-backend/data
+backend/data/*
+!backend/data/models/
 node_modules/
 /test-results/
 /playwright-report/
