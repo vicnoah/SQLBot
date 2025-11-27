@@ -1,6 +1,6 @@
 <p align="center"><img src="https://resource-fit2cloud-com.oss-cn-hangzhou.aliyuncs.com/sqlbot/sqlbot.png" alt="SQLBot" width="300" /></p>
 <h3 align="center">基于大模型和 RAG 的智能问数系统</h3>
-SQLBot 重制版部署文档
+## SQLBot 重制版部署文档
 
 概述
 
