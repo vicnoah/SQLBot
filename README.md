@@ -23,6 +23,8 @@
 1. 确保已安装 Docker 和 Docker Compose
 2. 创建项目目录：
    ```mkdir -p sqlbot-deployment/data/{sqlbot/excel,sqlbot/images,sqlbot/logs,postgresql}
+   ```
+   ```
    cd sqlbot-deployment
    ```
    
