@@ -117,15 +117,15 @@ class Settings(BaseSettings):
     ORACLE_CLIENT_PATH: str = '/opt/sqlbot/db_client/oracle_instant_client'
 
     # 企业微信登录配置
-    WEWORK_CORP_ID: str = 'wwee300b7e896b6751'  # 企业ID
-    WEWORK_SECRET: str = 'QgHI8J8eRnF9CN7rqOdZr3nrOJV6kv_dpFNdsYd1giQ'  # 应用Secret
-    WEWORK_AGENT_ID: str = '1000002'  # 应用AgentId
+    WEWORK_CORP_ID: str = ''  # 企业ID
+    WEWORK_SECRET: str = ''  # 应用Secret
+    WEWORK_AGENT_ID: str = ''  # 应用AgentId
     WEWORK_REDIRECT_URI: str = ''  # OAuth回调地址
-    WEWORK_ENABLED: bool = True  # 是否启用企业微信登录
+    WEWORK_ENABLED: bool = False  # 是否启用企业微信登录
     
     # 企业微信回调配置(用于验证和解密回调消息)
-    WEWORK_TOKEN: str = '6ZmJKTRYIai'  # 企业微信回调Token
-    WEWORK_ENCODING_AES_KEY: str = 'uAg3OgJT3iPMiAmz7S4EBw248dDkuJpOjWlVVRSK1L5'  # 企业微信回调EncodingAESKey
+    WEWORK_TOKEN: str = ''  # 企业微信回调Token
+    WEWORK_ENCODING_AES_KEY: str = ''  # 企业微信回调EncodingAESKey
 
 
 settings = Settings()  # type: ignore
