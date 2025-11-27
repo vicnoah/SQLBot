@@ -145,6 +145,8 @@ AI模型设置
 <img width="2173" height="1165" alt="image" src="https://github.com/user-attachments/assets/d0f9a1ef-c63a-4a68-b745-f071ab23a2de" />
 SQL示例库
 <img width="2173" height="1165" alt="image" src="https://github.com/user-attachments/assets/2cecea9d-0d17-4496-aa42-f19801532ffc" />
+授权信息
+<img width="2173" height="1165" alt="image" src="https://github.com/user-attachments/assets/45ce2dbb-56ba-466b-8247-d8edbed6cb4f" />
 
 
 数据持久化
