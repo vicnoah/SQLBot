@@ -95,6 +95,70 @@ services:
 networks:
   sqlbot-network:
 ```
+国内环境可采用此yaml
+```yaml
+version: '3.8'
+
+services:
+  sqlbot:
+    image: ghcr.1ms.run/vicnoah/sqlbot:latest
+    container_name: sqlbot
+    restart: always
+    networks:
+      - sqlbot-network
+    ports:
+      - 8000:8000
+      - 8001:8001
+    environment:
+      # Database configuration
+      POSTGRES_SERVER: sqlbot-db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: sqlbot
+      POSTGRES_USER: sqlbot
+      POSTGRES_PASSWORD: sqlbot
+      # Project basic settings
+      PROJECT_NAME: "SQLBot"
+      DEFAULT_PWD: "SQLBot@123456"
+      # MCP settings
+      SERVER_IMAGE_HOST: https://YOUR_SERVE_IP:MCP_PORT/images/
+      # Auth & Security
+      SECRET_KEY: y5txe1mRmS_JpOrUzFzHEu-kIQn3lf7ll0AOv9DQh0s
+      # CORS settings
+      BACKEND_CORS_ORIGINS: "http://localhost,http://localhost:5173,https://localhost,https://localhost:5173"
+      # Logging
+      LOG_LEVEL: "INFO"
+      SQL_DEBUG: False
+    volumes:
+      - ./data/sqlbot/excel:/opt/sqlbot/data/excel
+      - ./data/sqlbot/images:/opt/sqlbot/images
+      - ./data/sqlbot/logs:/opt/sqlbot/logs
+    depends_on:
+      sqlbot-db:
+        condition: service_healthy
+
+  sqlbot-db:
+    image: docker.1ms.run/pgvector/pgvector:pg17-trixie
+    container_name: sqlbot-db
+    restart: always
+    networks:
+      - sqlbot-network
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: sqlbot
+      POSTGRES_USER: sqlbot
+      POSTGRES_PASSWORD: sqlbot
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+networks:
+  sqlbot-network:
+```
 
 ### 4. 配置环境变量
 
